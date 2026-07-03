@@ -1,15 +1,49 @@
 .search-page {
   min-height: 100dvh;
-  padding: var(--spacing-4);
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4)
+    calc(env(safe-area-inset-bottom, 0px) + var(--spacing-6));
   background: var(--surface-base);
   box-sizing: border-box;
+}
+
+/* ---- Sticky head ---- */
+.search-head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: calc(env(safe-area-inset-top, 0px) + var(--spacing-3)) 0
+    var(--spacing-3);
+  background: var(--surface-base);
+}
+
+.search-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.search-back:hover {
+  background: var(--surface-overlay);
 }
 
 .search-bar {
   display: flex;
   align-items: center;
   gap: var(--spacing-2);
-  padding: var(--spacing-2) var(--spacing-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--spacing-2) var(--spacing-2) var(--spacing-2) var(--spacing-3);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-full);
   background: var(--surface-raised);
@@ -30,21 +64,119 @@
   outline: none;
 }
 
+/* ---- Suggestions ---- */
+.search-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  margin-top: var(--spacing-4);
+}
+
+.search-suggest__title {
+  margin: 0 0 var(--spacing-3);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--weight-medium);
+}
+
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+/* ---- Status / empty ---- */
 .search-status {
-  margin: var(--spacing-5) 0;
+  margin: var(--spacing-6) 0;
   color: var(--text-muted);
   text-align: center;
 }
 
-.search-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--spacing-3);
+  margin-top: var(--spacing-8);
+  text-align: center;
+}
+
+.search-empty__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--weight-bold);
+}
+
+.search-empty__note {
+  max-width: 22rem;
+  margin: 0 0 var(--spacing-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-base);
+}
+
+/* ---- Masonry grid (CSS columns) ---- */
+.search-grid {
+  column-count: 2;
+  column-gap: var(--spacing-3);
   margin-top: var(--spacing-4);
 }
 
-.search-grid__cell {
+.search-cell {
+  position: relative;
   display: block;
-  aspect-ratio: 3 / 4;
+  width: 100%;
+  margin-bottom: var(--spacing-3);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  background: var(--surface-raised);
   text-decoration: none;
+  break-inside: avoid;
+}
+
+.search-cell--skeleton {
+  height: 220px;
+}
+
+.search-cell__img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.search-cell__badge {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+  padding: 1px var(--spacing-2);
+  border-radius: var(--radius-sm);
+  background: var(--overlay-backdrop);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--weight-bold);
+}
+
+.search-cell__label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--spacing-5) var(--spacing-3) var(--spacing-2);
+  background: var(--scrim-bottom);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-sentinel {
+  height: 1px;
+}
+
+@media (min-width: 768px) {
+  .search-grid {
+    column-count: 3;
+  }
 }

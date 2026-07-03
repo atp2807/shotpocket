@@ -1,58 +1,96 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { REPORT_REASON } from '@shotpocket/shared';
+import { ArrowLeft } from 'lucide-react';
+import { EMOTION_LABEL, ERROR_CODES } from '@shotpocket/shared';
 import MemeCard from '../components/meme/MemeCard.jsx';
 import ActionBar from '../components/meme/ActionBar.jsx';
 import { memesApi } from '../services/api/memes.js';
-import { reportsApi } from '../services/api/reports.js';
 import { logger } from '../utils/logger.js';
 import './MemeDetailPage.css';
 
-// 짤 상세 스켈레톤. memesApi(상세 + 유사) 호출, 신고는 reportsApi.
+// 짤 상세. 미디어 크게 + 메타 + 가로 ActionBar + '비슷한 짤' 가로 스크롤.
+// 404(MEME_001) 는 NotFound 안내로 분기.
 export default function MemeDetailPage() {
   const { id } = useParams();
   const [meme, setMeme] = useState(null);
   const [similar, setSimilar] = useState([]);
-  const [phase, setPhase] = useState('loading'); // loading | ready | error
+  const [phase, setPhase] = useState('loading'); // loading | ready | notfound | error
 
   useEffect(() => {
     let active = true;
     setPhase('loading');
-    Promise.all([memesApi.getMeme(id), memesApi.getSimilar(id)])
-      .then(([detail, sim]) => {
+    setMeme(null);
+    setSimilar([]);
+
+    memesApi
+      .getMeme(id)
+      .then((detail) => {
         if (!active) {
           return;
         }
-        setMeme(detail || null);
-        setSimilar((sim && sim.items) || []);
+        if (!detail) {
+          setPhase('notfound');
+          return;
+        }
+        setMeme(detail);
         setPhase('ready');
+        // 유사 짤은 부가 정보 — 실패해도 상세는 유지.
+        memesApi
+          .getSimilar(id)
+          .then((sim) => {
+            if (active) {
+              setSimilar((sim && sim.items) || []);
+            }
+          })
+          .catch((err) => logger.warn('유사 짤 로드 실패', err));
       })
       .catch((err) => {
-        logger.error('상세 로드 실패', err);
-        if (active) {
+        if (!active) {
+          return;
+        }
+        const httpStatus = err && err.status;
+        const notFound =
+          httpStatus === 404 || (err && err.errorCode === ERROR_CODES.MEME_001.code);
+        if (notFound) {
+          setPhase('notfound');
+        } else {
+          logger.error('상세 로드 실패', err);
           setPhase('error');
         }
       });
+
     return () => {
       active = false;
     };
   }, [id]);
 
-  const handleReport = async (memeId) => {
-    try {
-      await reportsApi.createReport({ memeId, reasonCd: REPORT_REASON.ETC });
-      logger.info('신고 접수', memeId);
-    } catch (err) {
-      logger.error('신고 실패', err);
-    }
-  };
+  const backBar = (
+    <div className="detail-topbar">
+      <Link to="/" className="detail-back" aria-label="피드로">
+        <ArrowLeft size={22} />
+      </Link>
+    </div>
+  );
 
   if (phase === 'loading') {
     return (
       <main className="detail-page">
+        {backBar}
         <div className="detail-stage">
           <MemeCard meme={null} />
         </div>
+      </main>
+    );
+  }
+
+  if (phase === 'notfound') {
+    return (
+      <main className="detail-page detail-page--message">
+        <p className="detail-message">그 짤은 사라졌어요.</p>
+        <p className="detail-submessage">삭제되었거나 없는 주소예요.</p>
+        <Link to="/" className="btn btn--primary btn--small">
+          피드로 돌아가기
+        </Link>
       </main>
     );
   }
@@ -68,26 +106,54 @@ export default function MemeDetailPage() {
     );
   }
 
+  const emotionLabel = EMOTION_LABEL[meme.emotion_cd];
+
   return (
     <main className="detail-page">
+      {backBar}
+
       <div className="detail-stage">
-        <MemeCard meme={meme} />
-        <div className="detail-actions">
-          <ActionBar memeId={meme.id} onReport={handleReport} />
-        </div>
+        <MemeCard meme={meme} full />
       </div>
+
+      <section className="detail-info">
+        {meme.meme_name ? (
+          <h1 className="detail-info__name">{meme.meme_name}</h1>
+        ) : null}
+        {meme.caption ? (
+          <p className="detail-info__caption">{meme.caption}</p>
+        ) : null}
+        {emotionLabel || meme.situation ? (
+          <div className="detail-info__tags">
+            {emotionLabel ? (
+              <span className="detail-info__tag">#{emotionLabel}</span>
+            ) : null}
+            {meme.situation ? (
+              <span className="detail-info__tag">#{meme.situation}</span>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="detail-info__actions">
+          <ActionBar meme={meme} orientation="horizontal" />
+        </div>
+      </section>
 
       {similar.length > 0 ? (
         <section className="detail-similar">
           <h2 className="detail-similar__title">비슷한 짤</h2>
-          <div className="detail-similar__grid">
+          <div className="detail-similar__strip">
             {similar.map((item) => (
               <Link
                 key={item.id}
                 to={`/meme/${item.id}`}
                 className="detail-similar__cell"
               >
-                <MemeCard meme={item} />
+                <img
+                  className="detail-similar__img"
+                  src={item.thumb_url}
+                  alt={item.caption || item.meme_name || '짤'}
+                  loading="lazy"
+                />
               </Link>
             ))}
           </div>

@@ -1,0 +1,28 @@
+/* 토스트 포탈 스택. 기본 .toast 스타일은 CommonStyles.css 에 정의됨. */
+.toast-portal {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--spacing-6) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: var(--spacing-2);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* 스택 안에서는 fixed 대신 흐름 배치로 재정의 */
+.toast--stack {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast--stack.toast--in {
+  opacity: 1;
+  transform: translateY(0);
+}

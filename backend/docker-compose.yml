@@ -30,6 +30,10 @@ services:
       POSTGRES_USER: shotpocket
       POSTGRES_PASSWORD: shotpocket
       POSTGRES_DB: shotpocket
+    # 로컬 개발: 호스트 venv(uvicorn/seed/pipeline)에서 접속하기 위한 포트 공개.
+    # 5432 는 타 프로젝트가 점유할 수 있어 55432 로 매핑(운영은 내부 네트워크만 사용).
+    ports:
+      - "127.0.0.1:55432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
       # 최초 기동 시 스키마/테이블 적용 (알파벳 순 실행)
@@ -43,6 +47,9 @@ services:
 
   redis:
     image: redis:7-alpine
+    # 로컬 개발: 호스트 venv에서 접속하기 위한 포트 공개(운영은 내부 네트워크만).
+    ports:
+      - "127.0.0.1:63790:6379"
     restart: unless-stopped
 
 volumes:

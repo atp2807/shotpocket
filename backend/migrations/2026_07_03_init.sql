@@ -54,7 +54,7 @@ CREATE INDEX IF NOT EXISTS ix_meme_analysis_meme_id ON meme.analysis (meme_id);
 
 CREATE TABLE IF NOT EXISTS meme.embedding (
     meme_id   UUID PRIMARY KEY REFERENCES meme.meme (id) ON DELETE CASCADE,
-    embedding vector(1024) NOT NULL   -- bge-m3 (1024차원)
+    embedding vector(384) NOT NULL   -- intfloat/multilingual-e5-small (384차원)
 );
 -- HNSW 코사인 인덱스 (의미 유사도 검색)
 CREATE INDEX IF NOT EXISTS ix_meme_embedding_hnsw

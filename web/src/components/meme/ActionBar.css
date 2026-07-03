@@ -5,6 +5,18 @@
   align-items: center;
 }
 
+.action-bar--horizontal {
+  flex-direction: row;
+  gap: var(--spacing-5);
+}
+
+.action-bar__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
 .action-bar__btn {
   display: inline-flex;
   align-items: center;
@@ -27,4 +39,11 @@
 .action-bar__btn--active {
   background: var(--brand);
   color: var(--brand-contrast);
+}
+
+.action-bar__count {
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--weight-medium);
+  text-shadow: var(--shadow-base);
 }

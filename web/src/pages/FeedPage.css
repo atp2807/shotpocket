@@ -1,12 +1,16 @@
 .feed-page {
+  position: relative;
   height: 100dvh;
   background: var(--surface-base);
+  overflow: hidden;
 }
 
 .feed-page--message {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--spacing-4);
 }
 
 .feed-message {
@@ -14,11 +18,55 @@
   font-size: var(--font-size-base);
 }
 
+/* ---- Top nav ---- */
+.feed-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + var(--spacing-3))
+    var(--spacing-4) var(--spacing-3);
+  background: var(--scrim-top);
+  pointer-events: none;
+}
+
+.feed-nav__logo {
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.feed-nav__search {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.feed-nav__search:hover {
+  background: var(--surface-overlay);
+}
+
+/* ---- Scroller ---- */
 .feed-scroller {
   height: 100dvh;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .feed-scroller::-webkit-scrollbar {
@@ -30,21 +78,39 @@
   height: 100dvh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  padding: var(--feed-gap);
   box-sizing: border-box;
 }
 
-.feed-slide__actions {
-  position: absolute;
-  right: var(--spacing-5);
-  bottom: var(--spacing-8);
-  z-index: var(--z-nav);
+/* 피드에서는 카드가 풀블리드(라운드/그림자 제거) */
+.feed-slide .meme-card {
+  border-radius: 0;
+  box-shadow: none;
 }
 
+/* z-index 없음: DOM 순서상 카드보다 뒤, actions(--z-nav)보다 앞에 위치 */
 .feed-slide__open {
   position: absolute;
   inset: 0;
   border: none;
   background: transparent;
   cursor: pointer;
+}
+
+.feed-slide__actions {
+  position: absolute;
+  right: var(--spacing-4);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-8));
+  z-index: var(--z-nav);
+}
+
+/* ---- 데스크톱: 카드 최대폭 480 중앙 정렬 ---- */
+@media (min-width: 768px) {
+  .feed-slide {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .feed-slide .meme-card {
+    border-radius: var(--card-radius);
+  }
 }

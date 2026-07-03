@@ -79,5 +79,5 @@ class Embedding(Base):
         ForeignKey(f"{SCHEMA}.meme.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    # 차원 1024 (EMBEDDING_MODEL=bge-m3). HNSW cosine 인덱스는 마이그레이션에서 생성.
-    embedding: Mapped[list[float]] = mapped_column(Vector(1024))
+    # 차원 384 (intfloat/multilingual-e5-small). HNSW cosine 인덱스는 마이그레이션에서 생성.
+    embedding: Mapped[list[float]] = mapped_column(Vector(384))

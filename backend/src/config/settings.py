@@ -6,8 +6,12 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# backend/ 루트 (settings.py = backend/src/config/settings.py → parents[2])
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -25,16 +29,31 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+psycopg2://shotpocket:shotpocket@db:5432/shotpocket"
     REDIS_URL: str = "redis://redis:6379/0"
 
+    # 저장 방식: local(MEDIA_ROOT 파일) | r2(Cloudflare R2 public URL)
+    STORAGE_MODE: str = "local"
+    # 로컬 미디어 저장 루트 / 무인 수집 인박스 / 파이프라인 작업 디렉토리
+    MEDIA_ROOT: str = str(BASE_DIR / "var" / "media")
+    INBOX_DIR: str = str(BASE_DIR / "var" / "inbox")
+    WORK_DIR: str = str(BASE_DIR / "var" / "work")
+
     # R2 (Cloudflare, S3 호환)
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET: str = "shotpocket"
+    # r2 public 도메인 (STORAGE_MODE=r2 일 때 URL 빌더가 사용). 없으면 r2.dev 형태 폴백.
+    R2_PUBLIC_BASE_URL: str = ""
 
-    # 분석/임베딩
-    EMBEDDING_MODEL: str = "bge-m3"
-    EMBEDDING_DIM: int = 1024
-    VISION_MODE: str = "local"
+    # 분석/임베딩 (프로덕션 RAM 1.8GB 제약 → 경량 ONNX 384차원)
+    # e5-small은 fastembed registry 미지원 → MiniLM 다국어로 확정 (lr-333a4e1a)
+    EMBEDDING_MODEL: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    EMBEDDING_DIM: int = 384
+    # 임베딩 공급자: fastembed(EMBEDDING_MODEL, 384d) | mock(sha256 결정적)
+    EMBEDDING_PROVIDER: str = "mock"
+    # 비전 공급자: mock(Pillow 색상+파일명 규칙) | anthropic(claude-haiku vision)
+    VISION_PROVIDER: str = "mock"
+    VISION_MODE: str = "local"  # (구) 호환 필드 — 신규 코드는 VISION_PROVIDER 사용
+    ANTHROPIC_API_KEY: str = ""
 
     # 운영 API (X-Ops-Key 헤더로 검증. Cloudflare Access 뒤 배치 전제)
     OPS_API_KEY: str = "change-me-ops-key"

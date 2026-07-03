@@ -1,11 +1,13 @@
-"""search 리포지토리 — SQLAlchemy 쿼리 + query_log 적재."""
+"""search 리포지토리 — 시맨틱(pgvector) + 키워드(ILIKE) 후보 조회 + query_log."""
 from __future__ import annotations
+
+import uuid
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from src.features.meme.domain.entities import MemeStatus
-from src.infrastructure.db.models.meme import Analysis, Meme
+from src.infrastructure.db.models.meme import Analysis, Embedding, Meme
 from src.infrastructure.db.models.stat import MemeStat, QueryLog
 
 
@@ -13,38 +15,43 @@ class SearchRepo:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def search(self, q: str, page: int, page_size: int) -> tuple[list[Meme], int]:
-        """의미 검색.
+    def semantic_ids(self, vec: list[float], limit: int) -> list[uuid.UUID]:
+        """쿼리 임베딩 코사인 근접순 meme_id (ACTIVE + 임베딩 보유)."""
+        distance = Embedding.embedding.cosine_distance(vec)
+        stmt = (
+            select(Meme.id)
+            .join(Embedding, Embedding.meme_id == Meme.id)
+            .where(Meme.status_cd == MemeStatus.ACTIVE)
+            .order_by(distance.asc())
+            .limit(limit)
+        )
+        return [row[0] for row in self.db.execute(stmt).all()]
 
-        placeholder: 임베딩 스텁이라 벡터 검색 대신 analysis 텍스트 ILIKE +
-        rank_score 정렬 폴백. 실제 임베딩 연결 후엔 query 임베딩과
-        embedding.cosine_distance 정렬로 교체한다.
-        """
+    def keyword_ids(self, q: str, limit: int) -> list[uuid.UUID]:
+        """caption/ocr_text/meme_name ILIKE 매칭 meme_id (ACTIVE), rank_score 순."""
         like = f"%{q}%"
         text_match = or_(
             Analysis.caption.ilike(like),
             Analysis.ocr_text.ilike(like),
             Analysis.meme_name.ilike(like),
-            Analysis.character_name.ilike(like),
-            Analysis.usage_context.ilike(like),
         )
-        base = (
-            select(Meme)
+        stmt = (
+            select(Meme.id)
             .join(Analysis, Analysis.meme_id == Meme.id)
             .join(MemeStat, MemeStat.meme_id == Meme.id, isouter=True)
             .where(Meme.status_cd == MemeStatus.ACTIVE, text_match)
+            .order_by(func.coalesce(MemeStat.rank_score, 0).desc())
+            .limit(limit)
         )
+        return [row[0] for row in self.db.execute(stmt).all()]
 
-        count_stmt = select(func.count()).select_from(base.subquery())
-        total = int(self.db.execute(count_stmt).scalar_one())
-
-        stmt = (
-            base.order_by(MemeStat.rank_score.desc().nullslast())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        items = list(self.db.execute(stmt).scalars().all())
-        return items, total
+    def get_memes_by_ids(self, ids: list[uuid.UUID]) -> list[Meme]:
+        """id 목록으로 Meme 조회 후 입력 순서(=랭킹 순서)로 정렬해 반환."""
+        if not ids:
+            return []
+        stmt = select(Meme).where(Meme.id.in_(ids))
+        by_id = {m.id: m for m in self.db.execute(stmt).scalars().all()}
+        return [by_id[i] for i in ids if i in by_id]
 
     def save_query_log(
         self, query_text: str, result_cnt: int, failed_yn: bool, ip_hash: str | None

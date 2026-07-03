@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.config.database import get_db
 from src.features.feed.application.feed_service import FeedService
+from src.features.meme.infrastructure.meme_repo import load_meme_extras
 from src.presentation.schemas.feed.feed_schema import FeedResponse
 from src.presentation.schemas.meme.meme_schema import MemeSummary
 
@@ -19,7 +20,8 @@ def get_feed(
     db: Session = Depends(get_db),
 ) -> FeedResponse:
     items, next_cursor = FeedService(db).list_feed(cursor=cursor, limit=limit)
+    extras = load_meme_extras(db, [m.id for m in items])  # 1회 일괄 로드 (N+1 금지)
     return FeedResponse(
-        items=[MemeSummary.model_validate(m) for m in items],
+        items=[MemeSummary.from_meme(m, extras.get(m.id)) for m in items],
         next_cursor=next_cursor,
     )

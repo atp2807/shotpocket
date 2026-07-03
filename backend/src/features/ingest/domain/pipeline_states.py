@@ -24,6 +24,8 @@ class RejectReason:
     LOW_QUALITY = "LOW_QUALITY"
     FETCH_ERROR = "FETCH_ERROR"
     UNSUPPORTED = "UNSUPPORTED"
+    # 루프(움짤) 재생시간이 정책 상한(3초)을 초과
+    TOO_LONG = "TOO_LONG"
 
 
 # 파이프라인 틱에서 순차 처리할 (입력→출력) 전이 순서

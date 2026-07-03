@@ -16,6 +16,7 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config.database import SessionLocal
+from src.features.engage.application.rank_service import RankService
 from src.features.ingest.application.analyze_service import AnalyzeService
 from src.features.ingest.application.crawl_service import CrawlService
 from src.features.ingest.application.dedup_service import DedupService
@@ -53,8 +54,8 @@ def job_pipeline_tick() -> None:
 def job_rank_recalc() -> None:
     db = SessionLocal()
     try:
-        # 스텁: rank_score = f(like, download, view, 신선도) 재계산 예정
-        logger.info("[rank_recalc] stub")
+        n = RankService(db).recalc()
+        logger.info("[rank_recalc] updated=%d", n)
     finally:
         db.close()
 

@@ -15,8 +15,11 @@
 """
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.config.settings import settings
 from src.presentation.middleware.access_log import AccessLogMiddleware
@@ -71,6 +74,16 @@ def create_app() -> FastAPI:
     app.include_router(feed.router)
     app.include_router(reports.router)
     app.include_router(ops.router)
+
+    # 정적 미디어 서빙 (STORAGE_MODE=local): /media/{key} → MEDIA_ROOT/{key}
+    # r2 모드에서는 미디어를 R2 public URL 로 직접 서빙하므로 마운트 불필요.
+    if settings.STORAGE_MODE == "local":
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+        app.mount(
+            "/media",
+            StaticFiles(directory=settings.MEDIA_ROOT, check_dir=False),
+            name="media",
+        )
 
     @app.get("/health", tags=["ops"])
     def health() -> dict:

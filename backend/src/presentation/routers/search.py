@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from src.config.database import get_db
+from src.features.meme.infrastructure.meme_repo import load_meme_extras
 from src.features.search.application.search_service import SearchService
 from src.presentation.deps import get_ip_hash
 from src.presentation.schemas.meme.meme_schema import MemeSummary
@@ -23,8 +24,9 @@ def search(
     items, total, page_out, page_size = SearchService(db).search(
         q=q, page=page, ip_hash=get_ip_hash(request)
     )
+    extras = load_meme_extras(db, [m.id for m in items])  # 1회 일괄 로드 (N+1 금지)
     return SearchResponse(
-        items=[MemeSummary.model_validate(m) for m in items],
+        items=[MemeSummary.from_meme(m, extras.get(m.id)) for m in items],
         total=total,
         page=page_out,
         page_size=page_size,

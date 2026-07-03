@@ -35,6 +35,20 @@
   --shadow-base: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.5);
 
+  /* --- Scrim / overlay (미디어 위 텍스트 가독성, 모달 배경) --- */
+  --scrim-bottom: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.45) 42%,
+    transparent 100%
+  );
+  --scrim-top: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.55) 0%,
+    transparent 100%
+  );
+  --overlay-backdrop: rgba(0, 0, 0, 0.62);
+
   /* --- Component tokens --- */
   --card-radius: var(--radius-lg);
   --control-height-md: 40px;
