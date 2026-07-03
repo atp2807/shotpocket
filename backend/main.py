@@ -59,7 +59,8 @@ def create_app() -> FastAPI:
     # 7) CORS       : 마지막 add = 최선(최외곽) 실행.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # 공개 읽기 API. 운영에서 도메인 화이트리스트로 축소.
+        # 콤마 구분 화이트리스트 (.env ALLOWED_ORIGINS). 기본 * 은 로컬 개발용.
+        allow_origins=[o.strip() for o in settings.ALLOWED_ORIGINS.split(",")],
         allow_credentials=False,  # 쿠키/세션 없음(계정 없는 서비스)
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],

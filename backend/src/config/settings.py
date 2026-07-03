@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     VISION_MODE: str = "local"  # (구) 호환 필드 — 신규 코드는 VISION_PROVIDER 사용
     ANTHROPIC_API_KEY: str = ""
 
+    # CORS 허용 오리진 (콤마 구분). 프로덕션: https://shotpocket.sitos.me
+    ALLOWED_ORIGINS: str = "*"
+
     # 운영 API (X-Ops-Key 헤더로 검증. Cloudflare Access 뒤 배치 전제)
     OPS_API_KEY: str = "change-me-ops-key"
 
