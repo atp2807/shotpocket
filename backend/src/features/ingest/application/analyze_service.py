@@ -16,6 +16,7 @@ from src.infrastructure.vision.vision_provider import get_vision_provider
 logger = logging.getLogger("shotpocket.ingest.analyze")
 
 _NSFW_THRESHOLD = 0.9
+_MEME_SCORE_THRESHOLD = 0.4
 
 
 class AnalyzeService:
@@ -41,6 +42,18 @@ class AnalyzeService:
             if float(analysis.get("nsfw_score") or 0.0) >= _NSFW_THRESHOLD:
                 self.repo.set_status(
                     item.id, PipelineState.REJECTED, RejectReason.NSFW
+                )
+                processed += 1
+                continue
+
+            # 밈 판별: vision 이 밈 아님으로 판정하면 게시하지 않는다.
+            # (파일럿 실측: 힛갤·유머베스트 크롤분의 ~절반이 여행·취미 등 일반 사진)
+            if analysis.get("is_meme") is False or (
+                analysis.get("meme_score") is not None
+                and float(analysis["meme_score"]) < _MEME_SCORE_THRESHOLD
+            ):
+                self.repo.set_status(
+                    item.id, PipelineState.REJECTED, RejectReason.NOT_MEME
                 )
                 processed += 1
                 continue

@@ -5,7 +5,12 @@ source.source_type_cd 로 어댑터를 선택한다.
 
 - LocalFolderAdapter(LOCAL): 무인 로컬 인박스 수집. INBOX_DIR 스캔 → 파일을
   WORK_DIR 로 이동하고 후보를 반환(재스캔 시 중복 픽업 방지).
-- WebSourceAdapter(WEB): 실제 웹 크롤 어댑터 자리(TODO: httpx 크롤).
+- DcinsideAdapter(DCINSIDE): 디시인사이드 힛갤 실크롤(dcinside.py).
+- RuliwebAdapter(RULIWEB): 루리웹 유머 베스트 실크롤(ruliweb.py).
+- WebSourceAdapter(WEB): 일반 웹 페이지 크롤 어댑터 자리(TODO).
+
+fetch(base_url, *, limit, is_seen) — limit=회당 글 상한, is_seen(origin_url)->bool 은
+글 단위 중복 스킵(DB 조회) 콜백. 실크롤 어댑터가 사용하며, 로컬/스텁 어댑터는 무시한다.
 """
 from __future__ import annotations
 
@@ -13,9 +18,11 @@ import logging
 import os
 import shutil
 import uuid
-from typing import Protocol
+from typing import Callable, Protocol
 
 from src.config.settings import settings
+from src.features.ingest.infrastructure.source_adapters.dcinside import DcinsideAdapter
+from src.features.ingest.infrastructure.source_adapters.ruliweb import RuliwebAdapter
 
 logger = logging.getLogger("shotpocket.ingest.adapter")
 
@@ -25,8 +32,18 @@ _IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 class SourceAdapter(Protocol):
     source_type_cd: str
 
-    def fetch(self, base_url: str) -> list[dict]:
-        """소스에서 후보 아이템 목록을 수집."""
+    def fetch(
+        self,
+        base_url: str,
+        *,
+        limit: int = 30,
+        is_seen: Callable[[str], bool] | None = None,
+    ) -> list[dict]:
+        """소스에서 후보 아이템 목록을 수집.
+
+        limit: 회당 글 수집 상한. is_seen: origin_url 기존 존재 여부 콜백(중복 스킵).
+        로컬/스텁 어댑터는 두 인자를 무시한다.
+        """
         ...
 
 
@@ -39,7 +56,13 @@ class LocalFolderAdapter:
 
     source_type_cd = "LOCAL"
 
-    def fetch(self, base_url: str) -> list[dict]:
+    def fetch(
+        self,
+        base_url: str,
+        *,
+        limit: int = 30,
+        is_seen: Callable[[str], bool] | None = None,
+    ) -> list[dict]:
         inbox = base_url or settings.INBOX_DIR
         work_dir = settings.WORK_DIR
         if not os.path.isdir(inbox):
@@ -78,13 +101,21 @@ class WebSourceAdapter:
 
     source_type_cd = "WEB"
 
-    def fetch(self, base_url: str) -> list[dict]:
+    def fetch(
+        self,
+        base_url: str,
+        *,
+        limit: int = 30,
+        is_seen: Callable[[str], bool] | None = None,
+    ) -> list[dict]:
         return []
 
 
 # source_type_cd → 어댑터 인스턴스
 ADAPTER_REGISTRY: dict[str, SourceAdapter] = {
     LocalFolderAdapter.source_type_cd: LocalFolderAdapter(),
+    DcinsideAdapter.source_type_cd: DcinsideAdapter(),
+    RuliwebAdapter.source_type_cd: RuliwebAdapter(),
     WebSourceAdapter.source_type_cd: WebSourceAdapter(),
 }
 

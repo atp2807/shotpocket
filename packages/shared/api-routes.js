@@ -6,6 +6,7 @@ export const API_ROUTES = {
     SIMILAR: (id) => `/api/memes/${id}/similar`,
     LIKES: (id) => `/api/memes/${id}/likes`,
     DOWNLOADS: (id) => `/api/memes/${id}/downloads`,
+    VIEWS: (id) => `/api/memes/${id}/views`,
   },
   SEARCH: {
     QUERY: '/api/search',

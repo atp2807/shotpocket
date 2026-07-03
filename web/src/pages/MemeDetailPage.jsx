@@ -5,6 +5,7 @@ import { EMOTION_LABEL, ERROR_CODES } from '@shotpocket/shared';
 import MemeCard from '../components/meme/MemeCard.jsx';
 import ActionBar from '../components/meme/ActionBar.jsx';
 import { memesApi } from '../services/api/memes.js';
+import { engageApi } from '../services/api/engage.js';
 import { logger } from '../utils/logger.js';
 import './MemeDetailPage.css';
 
@@ -62,6 +63,14 @@ export default function MemeDetailPage() {
     return () => {
       active = false;
     };
+  }, [id]);
+
+  // 상세 진입 시 조회수 1회 집계(뷰는 실패 개념 없음 — 서버 1시간 중복 무시).
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+    engageApi.countView(id).catch(() => {});
   }, [id]);
 
   const backBar = (

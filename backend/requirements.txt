@@ -11,6 +11,8 @@ APScheduler==3.11.0
 pgvector==0.3.6
 boto3==1.35.90
 httpx==0.28.1
+# 실크롤 어댑터(디시 힛갤/루리웹 유머베스트) HTML 파싱
+beautifulsoup4==4.12.3
 imagehash==4.3.1
 Pillow==11.1.0
 imageio-ffmpeg==0.6.0

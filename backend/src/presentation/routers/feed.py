@@ -17,9 +17,12 @@ router = APIRouter(prefix="/api/feed", tags=["feed"])
 def get_feed(
     cursor: str | None = Query(default=None),
     limit: int = Query(default=10, ge=1, le=50),
+    sort: str = Query(default="recommended"),
     db: Session = Depends(get_db),
 ) -> FeedResponse:
-    items, next_cursor = FeedService(db).list_feed(cursor=cursor, limit=limit)
+    items, next_cursor = FeedService(db).list_feed(
+        cursor=cursor, limit=limit, sort=sort
+    )
     extras = load_meme_extras(db, [m.id for m in items])  # 1회 일괄 로드 (N+1 금지)
     return FeedResponse(
         items=[MemeSummary.from_meme(m, extras.get(m.id)) for m in items],

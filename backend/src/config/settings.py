@@ -52,8 +52,9 @@ class Settings(BaseSettings):
     EMBEDDING_DIM: int = 384
     # 임베딩 공급자: fastembed(EMBEDDING_MODEL, 384d) | mock(sha256 결정적)
     EMBEDDING_PROVIDER: str = "mock"
-    # 비전 공급자: mock(Pillow 색상+파일명 규칙) | anthropic(claude-haiku vision)
+    # 비전 공급자: mock(Pillow 색상+파일명 규칙) | anthropic(API) | claude_cli(구독 OAuth, 맥 전용)
     VISION_PROVIDER: str = "mock"
+    CLAUDE_CLI_MODEL: str = "sonnet"  # claude_cli 프로바이더용 (sonnet|haiku)
     VISION_MODE: str = "local"  # (구) 호환 필드 — 신규 코드는 VISION_PROVIDER 사용
     ANTHROPIC_API_KEY: str = ""
 

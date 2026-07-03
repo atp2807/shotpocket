@@ -60,6 +60,45 @@
   background: var(--surface-overlay);
 }
 
+/* ---- Section tabs (섹션 전환) ---- */
+.feed-tabs {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + var(--spacing-8) + var(--spacing-3));
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  gap: var(--spacing-2);
+  justify-content: center;
+  padding: 0 var(--spacing-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.feed-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.feed-tab {
+  flex: none;
+  padding: var(--spacing-1) var(--spacing-3);
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--surface-overlay);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.feed-tab--active {
+  background: var(--brand);
+  color: var(--brand-contrast);
+  font-weight: var(--weight-bold);
+}
+
 /* ---- Scroller ---- */
 .feed-scroller {
   height: 100dvh;

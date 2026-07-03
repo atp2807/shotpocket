@@ -26,6 +26,10 @@ class RejectReason:
     UNSUPPORTED = "UNSUPPORTED"
     # 루프(움짤) 재생시간이 정책 상한(3초)을 초과
     TOO_LONG = "TOO_LONG"
+    # 미디어가 수집 허용 상한 초과(스틸 >20MB·장변 >4096px / GIF >15MB)
+    TOO_LARGE = "TOO_LARGE"
+    # 밈이 아닌 일반 사진 (vision is_meme=false — 커뮤니티 글엔 여행·취미 사진이 다수 섞임)
+    NOT_MEME = "NOT_MEME"
 
 
 # 파이프라인 틱에서 순차 처리할 (입력→출력) 전이 순서

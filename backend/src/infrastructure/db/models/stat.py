@@ -31,6 +31,27 @@ class MemeStat(Base):
     )
 
 
+class EngageHourly(Base):
+    """시간대별 인게이지 집계 — (meme_id, hour_ts) 버킷 누적.
+
+    meme_stat(무한 누적)과 별개: 시간창(24h/2h) 롤업 전용. 7일 경과 row 는
+    scheduler 의 engage_hourly_cleanup 잡이 삭제한다.
+    """
+
+    __tablename__ = "engage_hourly"
+    __table_args__ = {"schema": SCHEMA}
+
+    meme_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("meme.meme.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    hour_ts: Mapped[dt.datetime] = mapped_column(primary_key=True)
+    view_cnt: Mapped[int] = mapped_column(Integer, default=0)
+    like_cnt: Mapped[int] = mapped_column(Integer, default=0)
+    download_cnt: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class QueryLog(Base):
     __tablename__ = "query_log"
     __table_args__ = {"schema": SCHEMA}

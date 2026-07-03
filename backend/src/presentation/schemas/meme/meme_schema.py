@@ -116,9 +116,10 @@ class SimilarResponse(BaseModel):
 
 
 class EngageResponse(BaseModel):
-    """좋아요/다운로드 집계 응답. download 시 download_url(orig) 포함."""
+    """좋아요/다운로드/조회 집계 응답. download 시 download_url(orig) 포함."""
 
     meme_id: uuid.UUID
     like_cnt: int | None = None
     download_cnt: int | None = None
+    view_cnt: int | None = None
     download_url: str | None = None

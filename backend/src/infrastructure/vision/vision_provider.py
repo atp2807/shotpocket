@@ -113,6 +113,8 @@ class MockVisionProvider:
             "nsfw_score": 0.0,
             "confidence": 0.2,
             "model_cd": self.model_cd,
+            "is_meme": True,  # mock 은 판별 능력 없음 — 통과시키고 게시 품질은 실 vision 에 위임
+            "meme_score": 1.0,
         }
 
 
@@ -152,19 +154,7 @@ class AnthropicVisionProvider:
         with open(path, "rb") as fh:
             b64 = base64.standard_b64encode(fh.read()).decode("ascii")
 
-        emotion_list = ", ".join(EMOTION_CODES)
-        situation_list = ", ".join(SITUATION_CODES)
-        prompt = (
-            "이 이미지는 한국어 밈(짤)이다. 아래 JSON 스키마로만 응답하라(설명 금지).\n"
-            "{"
-            '"caption": str, "situation": str, '
-            f'"emotion_cd": one of [{emotion_list}], '
-            '"ocr_text": str, "usage_context": str, '
-            '"character_name": str|null, "meme_name": str, '
-            '"lang_cd": "ko", "nsfw_score": 0~1 float, "confidence": 0~1 float'
-            "}\n"
-            f"situation 은 다음 코드 의미 중 하나로 서술: [{situation_list}]"
-        )
+        prompt = _analysis_prompt()
         payload = {
             "model": self.model_cd,
             "max_tokens": 1024,
@@ -206,6 +196,95 @@ class AnthropicVisionProvider:
         result["confidence"] = 0.9
         result["nsfw_score"] = float(result.get("nsfw_score") or 0.0)
         result["model_cd"] = self.model_cd
+        result["is_meme"] = bool(parsed.get("is_meme", True))
+        result["meme_score"] = float(parsed.get("meme_score") or (1.0 if result["is_meme"] else 0.0))
+        return result
+
+
+def _analysis_prompt() -> str:
+    emotion_list = ", ".join(EMOTION_CODES)
+    situation_list = ", ".join(SITUATION_CODES)
+    return (
+        "이 이미지는 한국어 밈(짤)이다. 아래 JSON 스키마로만 응답하라(설명 금지).\n"
+        "{"
+        '"caption": str, "situation": str, '
+        f'"emotion_cd": one of [{emotion_list}], '
+        '"ocr_text": str, "usage_context": str, '
+        '"character_name": str|null, "meme_name": str, '
+        '"lang_cd": "ko", "nsfw_score": 0~1 float, "confidence": 0~1 float, '
+        '"is_meme": bool, "meme_score": 0~1 float'
+        "}\n"
+        f"situation 은 다음 코드 의미 중 하나로 서술: [{situation_list}]\n"
+        "usage_context 는 '어떤 대화 상황에서 이 짤을 보내는가'를 구체적으로. "
+        "ocr_text 는 이미지 안의 모든 한글/영문 텍스트.\n"
+        "is_meme: 대화에서 반응/감정 표현용으로 보낼 만한 밈·짤이면 true. "
+        "여행 인증샷·취미/제품 사진·풍경 등 일반 사진이면 false, meme_score 낮게."
+    )
+
+
+class ClaudeCliVisionProvider:
+    """claude CLI headless(-p) + Read 도구 — 구독(OAuth) 기반, API 키/비용 없음.
+
+    해드림 claude_cli.py 패턴의 vision 확장: Read 를 허용해 이미지를 시각적으로
+    읽게 한다. 실패 시 mock 폴백. 맥 인덱싱 배치 전용(서버에서 쓰지 말 것 —
+    서버엔 claude CLI/OAuth 없음).
+    """
+
+    _SCRUB_PREFIXES = ("ANTHROPIC_", "OPENAI_", "GOOGLE_")  # 구독(OAuth) 강제
+
+    def __init__(self) -> None:
+        self._fallback = MockVisionProvider()
+        self.model_cd = f"claude-cli-{settings.CLAUDE_CLI_MODEL}"
+
+    def analyze(self, path: str, orig_filename: str) -> dict:
+        try:
+            return self._analyze_cli(path)
+        except Exception:  # noqa: BLE001
+            logger.warning("claude_cli vision 실패 → mock 폴백", exc_info=True)
+            return self._fallback.analyze(path, orig_filename)
+
+    def _analyze_cli(self, path: str) -> dict:
+        import subprocess  # 지연 import
+
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if not any(k.startswith(p) for p in self._SCRUB_PREFIXES)
+        }
+        completed = subprocess.run(
+            [
+                "claude", "-p",
+                "--output-format", "json",
+                "--allowedTools", "Read",
+                "--model", settings.CLAUDE_CLI_MODEL,
+                "--system-prompt",
+                "밈 이미지 분석기. Read 도구로 지정된 이미지 파일을 읽고, "
+                "요구된 JSON 하나만 출력한다. 다른 텍스트 금지.",
+                f"이미지 파일을 Read 로 읽어라: {os.path.abspath(path)}\n\n" + _analysis_prompt(),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            env=env,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"claude CLI 실패: {completed.stderr.strip()[:200]}")
+
+        payload = json.loads(completed.stdout)
+        text = payload.get("result") or ""
+        parsed = json.loads(text[text.find("{") : text.rfind("}") + 1])
+
+        result = {k: parsed.get(k) for k in _SCHEMA_KEYS}
+        if result.get("emotion_cd") not in EMOTION_CODES:
+            result["emotion_cd"] = EMOTION_CODES[0]
+        result["lang_cd"] = "ko"
+        result["confidence"] = 0.85
+        result["nsfw_score"] = float(result.get("nsfw_score") or 0.0)
+        result["model_cd"] = self.model_cd
+        # 밈 판별 (analysis 테이블 저장 대상 아님 — analyze 단계 필터용)
+        result["is_meme"] = bool(parsed.get("is_meme", True))
+        result["meme_score"] = float(parsed.get("meme_score") or (1.0 if result["is_meme"] else 0.0))
         return result
 
 
@@ -215,7 +294,10 @@ _PROVIDERS: dict[str, VisionProvider] = {}
 def get_vision_provider() -> VisionProvider:
     name = (settings.VISION_PROVIDER or "mock").lower()
     if name not in _PROVIDERS:
-        _PROVIDERS[name] = (
-            AnthropicVisionProvider() if name == "anthropic" else MockVisionProvider()
-        )
+        if name == "anthropic":
+            _PROVIDERS[name] = AnthropicVisionProvider()
+        elif name == "claude_cli":
+            _PROVIDERS[name] = ClaudeCliVisionProvider()
+        else:
+            _PROVIDERS[name] = MockVisionProvider()
     return _PROVIDERS[name]

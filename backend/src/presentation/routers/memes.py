@@ -54,3 +54,12 @@ def create_download(
     return EngageResponse(
         meme_id=meme_id, download_cnt=download_cnt, download_url=download_url
     )
+
+
+@router.post("/{meme_id}/views", response_model=EngageResponse)
+def create_view(
+    meme_id: uuid.UUID, request: Request, db: Session = Depends(get_db)
+) -> EngageResponse:
+    # 뷰는 실패 개념 없음 — 1시간 내 중복이어도 409 아닌 200(현재 view_cnt) 반환.
+    view_cnt = EngageService(db).view(meme_id, ip_hash=get_ip_hash(request))
+    return EngageResponse(meme_id=meme_id, view_cnt=view_cnt)

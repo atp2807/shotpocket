@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import MemeCard from '../components/meme/MemeCard.jsx';
 import ActionBar from '../components/meme/ActionBar.jsx';
@@ -11,6 +11,19 @@ import { logger } from '../utils/logger.js';
 import './FeedPage.css';
 
 const SIMILAR_PER_PAGE = 3;
+
+// 피드 섹션 탭. key 는 백엔드 sort 파라미터와 1:1. 기본은 recommended.
+const TABS = [
+  { key: 'recommended', label: '추천' },
+  { key: 'today', label: '오늘의 인기' },
+  { key: 'rising', label: '지금 뜨는' },
+  { key: 'new', label: '최신' },
+];
+const DEFAULT_SORT = 'recommended';
+
+function resolveSort(raw) {
+  return TABS.some((t) => t.key === raw) ? raw : DEFAULT_SORT;
+}
 
 // 개인화 similar 아이템을 피드 아이템 사이에 고르게 끼워 넣는다.
 function interleave(base, extras) {
@@ -30,6 +43,10 @@ function interleave(base, extras) {
 // 화면에 들어온 카드의 video 만 재생한다(off-screen pause).
 export default function FeedPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 탭 상태는 URL 쿼리(?sort=)와 동기화 — 공유·새로고침에도 유지된다.
+  const sort = resolveSort(searchParams.get('sort'));
+
   const [items, setItems] = useState([]);
   const [phase, setPhase] = useState('loading'); // loading | ready | error | empty
   const [activeId, setActiveId] = useState(null);
@@ -39,7 +56,16 @@ export default function FeedPage() {
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(true);
   const slideRefs = useRef(new Map());
-  const startedRef = useRef(false);
+  // loadMore 는 안정적으로 유지되므로 현재 sort 는 ref 로 읽는다.
+  const sortRef = useRef(sort);
+
+  const selectSort = useCallback(
+    (key) => {
+      // recommended 는 쿼리 제거(깔끔한 URL), 그 외는 ?sort= 세팅.
+      setSearchParams(key === DEFAULT_SORT ? {} : { sort: key });
+    },
+    [setSearchParams],
+  );
 
   const mergeNew = useCallback((incoming) => {
     const fresh = [];
@@ -58,7 +84,7 @@ export default function FeedPage() {
     }
     loadingRef.current = true;
     try {
-      const res = await feedApi.getFeed(cursorRef.current);
+      const res = await feedApi.getFeed(cursorRef.current, sortRef.current);
       const pageItems = mergeNew((res && res.items) || []);
 
       // 로컬 개인화: 최근 engaged 짤의 similar 를 2~3개 자연스럽게 섞는다.
@@ -109,14 +135,19 @@ export default function FeedPage() {
     }
   }, [mergeNew]);
 
-  // 최초 1회 로드
+  // 탭(sort) 전환 시 피드를 리셋하고 처음부터 다시 로드. 최초 마운트도 여기서 로드.
   useEffect(() => {
-    if (startedRef.current) {
-      return;
-    }
-    startedRef.current = true;
+    sortRef.current = sort;
+    seenRef.current = new Set();
+    slideRefs.current = new Map();
+    cursorRef.current = undefined;
+    hasMoreRef.current = true;
+    loadingRef.current = false;
+    setItems([]);
+    setActiveId(null);
+    setPhase('loading');
     loadMore();
-  }, [loadMore]);
+  }, [sort, loadMore]);
 
   const registerSlide = useCallback((id, el) => {
     if (el) {
@@ -184,10 +215,28 @@ export default function FeedPage() {
     </nav>
   );
 
+  const tabBar = (
+    <div className="feed-tabs" role="tablist" aria-label="피드 정렬">
+      {TABS.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          role="tab"
+          aria-selected={sort === t.key}
+          className={sort === t.key ? 'feed-tab feed-tab--active' : 'feed-tab'}
+          onClick={() => selectSort(t.key)}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+
   if (phase === 'loading') {
     return (
       <main className="feed-page">
         {topNav}
+        {tabBar}
         <section className="feed-scroller">
           <div className="feed-slide">
             <MemeCard meme={null} />
@@ -201,6 +250,7 @@ export default function FeedPage() {
     return (
       <main className="feed-page feed-page--message">
         {topNav}
+        {tabBar}
         <p className="feed-message">피드를 불러오지 못했어요.</p>
         <Link to="/search" className="btn btn--ghost btn--small">
           검색으로 찾아보기
@@ -213,6 +263,7 @@ export default function FeedPage() {
     return (
       <main className="feed-page feed-page--message">
         {topNav}
+        {tabBar}
         <p className="feed-message">아직 짤이 없어요.</p>
       </main>
     );
@@ -221,6 +272,7 @@ export default function FeedPage() {
   return (
     <main className="feed-page">
       {topNav}
+      {tabBar}
       <section className="feed-scroller">
         {items.map((meme) => (
           <div

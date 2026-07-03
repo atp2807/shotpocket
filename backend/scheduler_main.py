@@ -6,6 +6,7 @@
   - rank_recalc        : 1시간마다 인기/신선도 기반 rank_score 재계산
   - seo_build          : 매일 04:00 사이트맵/정적 SEO 빌드
   - orphan_cleanup     : 매일 05:00 R2 고아 객체 + PENDING 잔여 회수
+  - engage_hourly_cleanup : 매일 06:00 stat.engage_hourly 7일 경과 row 삭제
 
 각 잡은 DB 세션을 열어 해당 서비스를 호출하고 로그만 남기는 스텁이다.
 """
@@ -17,6 +18,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from src.config.database import SessionLocal
 from src.features.engage.application.rank_service import RankService
+from src.features.engage.infrastructure.engage_repo import EngageRepo
 from src.features.ingest.application.analyze_service import AnalyzeService
 from src.features.ingest.application.crawl_service import CrawlService
 from src.features.ingest.application.dedup_service import DedupService
@@ -74,6 +76,16 @@ def job_orphan_cleanup() -> None:
         db.close()
 
 
+def job_engage_hourly_cleanup() -> None:
+    """stat.engage_hourly 에서 7일 지난 시간버킷 row 를 삭제(집계 창은 24h 만 사용)."""
+    db = SessionLocal()
+    try:
+        n = EngageRepo(db).cleanup_hourly(older_than_days=7)
+        logger.info("[engage_hourly_cleanup] deleted=%d", n)
+    finally:
+        db.close()
+
+
 def build_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="Asia/Seoul")
     scheduler.add_job(job_crawl, "interval", hours=1, id="crawl")
@@ -81,6 +93,9 @@ def build_scheduler() -> BackgroundScheduler:
     scheduler.add_job(job_rank_recalc, "interval", hours=1, id="rank_recalc")
     scheduler.add_job(job_seo_build, "cron", hour=4, minute=0, id="seo_build")
     scheduler.add_job(job_orphan_cleanup, "cron", hour=5, minute=0, id="orphan_cleanup")
+    scheduler.add_job(
+        job_engage_hourly_cleanup, "cron", hour=6, minute=0, id="engage_hourly_cleanup"
+    )
     return scheduler
 
 
