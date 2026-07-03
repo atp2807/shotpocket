@@ -98,6 +98,11 @@
   color: var(--brand-primary-soft);
   font-size: var(--font-size-sm);
   font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.detail-info__tag:hover {
+  text-decoration: underline;
 }
 
 .detail-info__actions {

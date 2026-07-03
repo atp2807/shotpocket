@@ -1,8 +1,7 @@
 .feed-page {
   position: relative;
-  height: 100dvh;
+  min-height: 100dvh;
   background: var(--surface-base);
-  overflow: hidden;
 }
 
 .feed-page--message {
@@ -30,7 +29,8 @@
   justify-content: space-between;
   padding: calc(env(safe-area-inset-top, 0px) + var(--spacing-3))
     var(--spacing-4) var(--spacing-3);
-  background: var(--scrim-top);
+  background: var(--surface-base);
+  border-bottom: 1px solid var(--border-soft);
   pointer-events: none;
 }
 
@@ -70,7 +70,9 @@
   display: flex;
   gap: var(--spacing-2);
   justify-content: center;
-  padding: 0 var(--spacing-4);
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--surface-base);
+  border-bottom: 1px solid var(--border-soft);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -99,31 +101,32 @@
   font-weight: var(--weight-bold);
 }
 
-/* ---- Scroller ---- */
+/* ---- Scroller ----
+   인스타식: 페이지가 문서 흐름대로 자연 스크롤(네이티브 스크롤바 노출).
+   고정 nav+tabs 만큼 상단 여백을 줘서 첫 카드가 가리지 않게 한다. */
 .feed-scroller {
-  height: 100dvh;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 108px);
+  padding-bottom: var(--spacing-8);
 }
 
-.feed-scroller::-webkit-scrollbar {
-  display: none;
-}
-
+/* 카드 높이 = 콘텐츠(짤) 실제 크기. 화면 강제 채움 없음 — 작은 짤은 짧게. */
 .feed-slide {
   position: relative;
-  height: 100dvh;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   box-sizing: border-box;
 }
 
-/* 피드에서는 카드가 풀블리드(라운드/그림자 제거) */
 .feed-slide .meme-card {
+  height: auto;
   border-radius: 0;
   box-shadow: none;
+}
+
+.feed-slide .meme-card__media {
+  height: auto;
+  max-height: 80dvh;
 }
 
 /* z-index 없음: DOM 순서상 카드보다 뒤, actions(--z-nav)보다 앞에 위치 */
@@ -138,7 +141,7 @@
 .feed-slide__actions {
   position: absolute;
   right: var(--spacing-4);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--spacing-8));
+  bottom: var(--spacing-4);
   z-index: var(--z-nav);
 }
 

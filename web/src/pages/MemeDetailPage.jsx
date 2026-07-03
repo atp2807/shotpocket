@@ -132,14 +132,33 @@ export default function MemeDetailPage() {
         {meme.caption ? (
           <p className="detail-info__caption">{meme.caption}</p>
         ) : null}
-        {emotionLabel || meme.situation ? (
+        {emotionLabel || meme.situation || (meme.tags && meme.tags.length > 0) ? (
           <div className="detail-info__tags">
             {emotionLabel ? (
-              <span className="detail-info__tag">#{emotionLabel}</span>
+              <Link
+                to={`/search?q=${encodeURIComponent(emotionLabel)}`}
+                className="detail-info__tag"
+              >
+                #{emotionLabel}
+              </Link>
             ) : null}
             {meme.situation ? (
-              <span className="detail-info__tag">#{meme.situation}</span>
+              <Link
+                to={`/search?q=${encodeURIComponent(meme.situation)}`}
+                className="detail-info__tag"
+              >
+                #{meme.situation}
+              </Link>
             ) : null}
+            {(meme.tags || []).map((tag) => (
+              <Link
+                key={tag}
+                to={`/search?q=${encodeURIComponent(tag)}`}
+                className="detail-info__tag"
+              >
+                #{tag}
+              </Link>
+            ))}
           </div>
         ) : null}
         <div className="detail-info__actions">
