@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  ShotPocket 야간 무인 인덱싱 배치 (맥 전용 LaunchAgent).
+
+  매일 03:30 에 scripts/nightly_batch.py 를 1회 완주한다.
+  crawl → dedup → analyze(claude_cli) → transcode → embed(fastembed)
+  → 서버 DB 게시(PENDING) → 미디어 rsync → 일괄 활성화.
+
+  잠자던 맥이 깨어나면 launchd 가 놓친 스케줄을 실행한다(03:30 에 잠들어
+  있었다면 기상 직후 1회 실행). 그래서 데스크톱/랩탑이 밤새 꺼져 있어도
+  아침에 켜지면 그날치 배치가 돈다.
+
+  설치: scripts/install_launchd.sh
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>me.sitos.shotpocket.nightly</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/daviy/Developer/shotpocket/backend/.venv/bin/python</string>
+        <string>-m</string>
+        <string>scripts.nightly_batch</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/daviy/Developer/shotpocket/backend</string>
+
+    <!-- claude CLI(~/.local/bin) + rsync/ssh(/usr/bin) 를 PATH 에 포함 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/daviy/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- 배치는 최대 수 시간 걸릴 수 있다(장당 ~12초 vision). 중복 기동 금지. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/daviy/Library/Logs/shotpocket-nightly.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/daviy/Library/Logs/shotpocket-nightly.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

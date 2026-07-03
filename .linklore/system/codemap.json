@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "at_commit": "4e38883",
+  "at_commit": "6e511b9",
   "by": "brief-bg",
   "identity": {
     "name": "shotpocket",
@@ -23,6 +23,11 @@
     {
       "path": "backend/src/features/engage/application",
       "role": null,
+      "files": 4
+    },
+    {
+      "path": "backend/src/features/ingest/infrastructure/source_adapters",
+      "role": "소스 어댑터 레지스트리 — 크롤 대상별 fetch 인터페이스.",
       "files": 4
     },
     {
@@ -56,6 +61,11 @@
       "files": 5
     },
     {
+      "path": "backend/scripts",
+      "role": null,
+      "files": 4
+    },
+    {
       "path": "backend/src/presentation/middleware",
       "role": null,
       "files": 4
@@ -64,16 +74,6 @@
       "path": "web/src/pages",
       "role": null,
       "files": 4
-    },
-    {
-      "path": "backend/scripts",
-      "role": null,
-      "files": 3
-    },
-    {
-      "path": "backend/src/shared/errors",
-      "role": null,
-      "files": 3
     }
   ],
   "landmarks": {
@@ -98,43 +98,43 @@
   "hotspots": [
     {
       "path": "backend/src/config/settings.py",
-      "commits_30d": 4,
-      "last": "53 minutes ago"
-    },
-    {
-      "path": "backend/main.py",
-      "commits_30d": 3,
-      "last": "53 minutes ago"
-    },
-    {
-      "path": "backend/src/features/ingest/application/publish_service.py",
-      "commits_30d": 3,
-      "last": "2 hours ago"
-    },
-    {
-      "path": "backend/src/infrastructure/r2/r2_client.py",
-      "commits_30d": 2,
-      "last": "2 hours ago"
+      "commits_30d": 6,
+      "last": "7 minutes ago"
     },
     {
       "path": "backend/src/shared/util/media.py",
-      "commits_30d": 2,
-      "last": "2 hours ago"
+      "commits_30d": 3,
+      "last": "7 minutes ago"
     },
     {
       "path": "backend/scheduler_main.py",
-      "commits_30d": 2,
-      "last": "2 hours ago"
+      "commits_30d": 3,
+      "last": "32 minutes ago"
     },
     {
       "path": "backend/src/features/engage/application/engage_service.py",
-      "commits_30d": 2,
-      "last": "2 hours ago"
+      "commits_30d": 3,
+      "last": "32 minutes ago"
     },
     {
       "path": "backend/src/features/ingest/application/analyze_service.py",
-      "commits_30d": 2,
-      "last": "2 hours ago"
+      "commits_30d": 3,
+      "last": "32 minutes ago"
+    },
+    {
+      "path": "backend/src/features/ingest/application/transcode_service.py",
+      "commits_30d": 3,
+      "last": "32 minutes ago"
+    },
+    {
+      "path": "backend/src/features/ingest/domain/pipeline_states.py",
+      "commits_30d": 3,
+      "last": "32 minutes ago"
+    },
+    {
+      "path": "backend/src/features/ingest/infrastructure/source_adapters/__init__.py",
+      "commits_30d": 3,
+      "last": "32 minutes ago"
     }
   ],
   "todos": {

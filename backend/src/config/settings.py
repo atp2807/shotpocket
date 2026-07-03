@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # 레이트리밋
     RATE_LIMIT_PER_MIN: int = 120
 
+    # 게시 활성화 유예: True 면 publish 4단계에서 ACTIVE 대신 PENDING 유지.
+    # 맥 야간 배치 전용 — 미디어 rsync 가 서버에 끝나기 전 ACTIVE 되면 피드에
+    # 깨진 이미지가 뜨므로, DB rows(PENDING) → 미디어 rsync → 일괄 ACTIVE 순서를
+    # 강제한다(scripts/nightly_batch.py 가 rsync 성공 후 이번 run 의 meme 만 활성화).
+    PUBLISH_DEFER_ACTIVATE: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -32,8 +32,8 @@ class PublishService:
         self.db = db
         self.repo = RawItemRepo(db)
 
-    def _publish_one(self, item) -> str:
-        """게시 1건. 생성한 미디어 디렉토리 경로를 반환(실패 정리용)."""
+    def _publish_one(self, item) -> tuple[str, str | None]:
+        """게시 1건. (meme_id, 생성한 미디어 디렉토리 경로) 반환(활성화·실패정리용)."""
         payload = dict(item.payload or {})
         media = payload.get("media") or {}
         analysis = payload.get("analysis") or {}
@@ -107,24 +107,33 @@ class PublishService:
         if embedding:
             self.db.add(Embedding(meme_id=meme_id, embedding=embedding))
 
-        # 4) ACTIVE + meme_stat 초기 row
-        meme.status_cd = MemeStatus.ACTIVE
+        # 4) 활성화 + meme_stat 초기 row
+        # DEFER 모드(맥 야간 배치): 미디어가 서버로 rsync 되기 전 ACTIVE 되면
+        # 피드에 깨진 이미지가 뜬다 → PENDING 유지, stat row 는 그대로 생성.
+        # 오케스트레이터가 rsync 성공 후 이번 run 의 meme 만 일괄 ACTIVE 전이한다.
+        if not settings.PUBLISH_DEFER_ACTIVATE:
+            meme.status_cd = MemeStatus.ACTIVE
         self.db.add(MemeStat(meme_id=meme_id, rank_score=initial_rank_score()))
 
         # 5) raw_item PUBLISHED
         self.repo.set_status(item.id, PipelineState.PUBLISHED)
-        return dest_dir
+        return str(meme_id), dest_dir
 
-    def run(self, limit: int = 100) -> int:
+    def run(self, limit: int = 100) -> list[str]:
+        """게시 실행. 이번 run 에서 생성된 meme_id 문자열 목록을 반환한다.
+
+        DEFER 모드에서 오케스트레이터가 이 목록으로 (rsync 후) 활성화 대상을
+        특정한다. 반환 목록 길이가 곧 게시 건수다(len()).
+        """
         items = self.repo.list_by_status(PipelineState.EMBEDDED, limit)
-        published = 0
+        meme_ids: list[str] = []
         for item in items:
             self._current_dir: str | None = None
             self._uploaded_keys: list[str] = []
             try:
-                self._current_dir = self._publish_one(item)
+                meme_id, self._current_dir = self._publish_one(item)
                 self.db.commit()
-                published += 1
+                meme_ids.append(meme_id)
             except Exception:  # noqa: BLE001
                 self.db.rollback()
                 logger.warning("publish 실패 item=%s", item.id, exc_info=True)
@@ -144,5 +153,5 @@ class PublishService:
                     item.id, PipelineState.REJECTED, RejectReason.FETCH_ERROR
                 )
                 self.db.commit()
-        logger.info("publish published=%d", published)
-        return published
+        logger.info("publish published=%d", len(meme_ids))
+        return meme_ids

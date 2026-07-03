@@ -10,12 +10,15 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint && npm run tokens:verify",
+    "tokens:verify": "node packages/shared/verify-tokens.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
     "web/src/**/*.css": "stylelint --fix --config web/stylelint.config.js",
-    "web/src/**/*.{js,jsx}": "eslint --fix --config web/eslint.config.js"
+    "web/src/**/*.{js,jsx}": "eslint --fix --config web/eslint.config.js",
+    "packages/shared/design-tokens.js": "node packages/shared/verify-tokens.mjs",
+    "web/src/components/theme/*.css": "node packages/shared/verify-tokens.mjs"
   },
   "devDependencies": {
     "husky": "^9.1.7",
