@@ -1,0 +1,31 @@
+/* Primitive color tokens — 유일하게 hex 리터럴이 허용되는 파일.
+   값은 packages/shared/design-tokens.js 의 COLORS 와 일치해야 한다.
+   여기서 정의한 primitive 는 design-tokens.css 의 semantic 토큰에서만 참조한다. */
+:root {
+  /* Gray scale (900 = darkest) */
+  --gray-900: #0b0b0f;
+  --gray-800: #141419;
+  --gray-700: #1e1e26;
+  --gray-600: #2a2a34;
+  --gray-500: #3a3a46;
+  --gray-400: #565663;
+  --gray-300: #7c7c8a;
+  --gray-200: #a8a8b3;
+  --gray-100: #d4d4dc;
+  --gray-50: #f4f4f7;
+
+  /* Brand */
+  --brand-primary: #7c5cff;
+  --brand-primary-strong: #6344e6;
+  --brand-primary-soft: #9e86ff;
+  --accent: #c8ff3d;
+  --accent-strong: #b2e82a;
+
+  /* Status */
+  --color-danger: #ff5c6c;
+  --color-success: #3ddc97;
+
+  /* Pure */
+  --color-white: #ffffff;
+  --color-black: #000000;
+}

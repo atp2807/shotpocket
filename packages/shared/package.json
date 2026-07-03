@@ -1,0 +1,13 @@
+{
+  "name": "@shotpocket/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./design-tokens.js": "./design-tokens.js",
+    "./categories.js": "./categories.js",
+    "./error-codes.js": "./error-codes.js",
+    "./api-routes.js": "./api-routes.js"
+  }
+}

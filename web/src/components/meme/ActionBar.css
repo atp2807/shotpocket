@@ -1,0 +1,30 @@
+.action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  align-items: center;
+}
+
+.action-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.action-bar__btn:hover {
+  background: var(--surface-raised);
+  transform: scale(1.06);
+}
+
+.action-bar__btn--active {
+  background: var(--brand);
+  color: var(--brand-contrast);
+}

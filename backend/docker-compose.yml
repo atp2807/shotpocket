@@ -1,0 +1,49 @@
+services:
+  api:
+    build: .
+    ports:
+      - "38090:38090"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    command: ["python", "scheduler_main.py"]
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_USER: shotpocket
+      POSTGRES_PASSWORD: shotpocket
+      POSTGRES_DB: shotpocket
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # 최초 기동 시 스키마/테이블 적용 (알파벳 순 실행)
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shotpocket -d shotpocket"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  db_data:

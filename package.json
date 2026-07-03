@@ -1,0 +1,25 @@
+{
+  "name": "shotpocket",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "packages/*",
+    "web"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "web/src/**/*.css": "stylelint --fix --config web/stylelint.config.js",
+    "web/src/**/*.{js,jsx}": "eslint --fix --config web/eslint.config.js"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "turbo": "^2.10.2"
+  }
+}

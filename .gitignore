@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+__pycache__
+*.pyc
+.venv
+.turbo
+.DS_Store
+backend/secrets/
+.wrangler

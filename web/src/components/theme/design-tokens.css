@@ -1,0 +1,67 @@
+/* Semantic + component + utility tokens.
+   다크 퍼스트: :root 가 다크 기본값, [data-theme='light'] 는 오버라이드 준비만.
+   이 파일은 theme 디렉토리에 있어 stylelint 하드코딩 검사에서 제외된다. */
+:root {
+  /* --- Semantic surface / text / border (dark default) --- */
+  --surface-base: var(--gray-900);
+  --surface-raised: var(--gray-800);
+  --surface-overlay: var(--gray-700);
+  --text-primary: var(--gray-50);
+  --text-muted: var(--gray-200);
+  --text-inverse: var(--gray-900);
+  --border-soft: var(--gray-600);
+  --brand: var(--brand-primary);
+  --brand-contrast: var(--gray-900);
+  --danger: var(--color-danger);
+  --success: var(--color-success);
+
+  /* --- Spacing (4px 배수) --- */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+
+  /* --- Radius --- */
+  --radius-sm: 6px;
+  --radius-base: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* --- Shadow --- */
+  --shadow-base: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* --- Component tokens --- */
+  --card-radius: var(--radius-lg);
+  --control-height-md: 40px;
+  --control-height-sm: 32px;
+  --feed-gap: var(--spacing-4);
+
+  /* --- z-index --- */
+  --z-nav: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  /* --- Font families (typography.css 에서 실제 사용) --- */
+  --font-body: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Apple SD Gothic Neo', sans-serif;
+  --font-heading: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Apple SD Gothic Neo', sans-serif;
+}
+
+/* 라이트 테마 오버라이드 준비 (값은 추후 디자인 확정 시 채운다) */
+[data-theme='light'] {
+  --surface-base: var(--gray-50);
+  --surface-raised: var(--color-white);
+  --surface-overlay: var(--gray-100);
+  --text-primary: var(--gray-900);
+  --text-muted: var(--gray-400);
+  --text-inverse: var(--gray-50);
+  --border-soft: var(--gray-200);
+  --brand-contrast: var(--color-white);
+}

@@ -1,0 +1,50 @@
+.feed-page {
+  height: 100dvh;
+  background: var(--surface-base);
+}
+
+.feed-page--message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-message {
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+}
+
+.feed-scroller {
+  height: 100dvh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.feed-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.feed-slide {
+  position: relative;
+  height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  padding: var(--feed-gap);
+  box-sizing: border-box;
+}
+
+.feed-slide__actions {
+  position: absolute;
+  right: var(--spacing-5);
+  bottom: var(--spacing-8);
+  z-index: var(--z-nav);
+}
+
+.feed-slide__open {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}

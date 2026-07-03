@@ -1,0 +1,19 @@
+{
+  "schema": 2,
+  "at_commit": "",
+  "by": "init",
+  "identity": {
+    "name": "shotpocket",
+    "tagline": null,
+    "stack": [],
+    "entry": []
+  },
+  "run": {},
+  "modules": [],
+  "landmarks": {},
+  "entities": [],
+  "hotspots": [],
+  "todos": {
+    "count": 0
+  }
+}

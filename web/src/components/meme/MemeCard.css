@@ -1,0 +1,35 @@
+.meme-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--card-radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-base);
+}
+
+.meme-card--empty {
+  min-height: 60vh;
+}
+
+.meme-card__media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--surface-base);
+}
+
+.meme-card__caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: var(--spacing-6) var(--spacing-4) var(--spacing-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+}
