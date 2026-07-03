@@ -15,9 +15,8 @@ def media_url(key: str | None) -> str | None:
     if not key:
         return None
     if settings.STORAGE_MODE == "r2":
-        base = (settings.R2_PUBLIC_BASE_URL or "").rstrip("/")
-        if base:
-            return f"{base}/{key}"
-        # 폴백: 계정 기반 r2.dev 형태(운영에선 커스텀 도메인 권장)
-        return f"https://{settings.R2_BUCKET}.r2.dev/{key}"
+        # 프리픽스(shotpocket/) 포함 공개 URL — r2_client 가 단일 소스
+        from src.infrastructure.r2.r2_client import r2_client
+
+        return r2_client.public_url(key)
     return f"/media/{key}"

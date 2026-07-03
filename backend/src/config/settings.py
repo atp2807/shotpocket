@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     R2_BUCKET: str = "shotpocket"
     # r2 public 도메인 (STORAGE_MODE=r2 일 때 URL 빌더가 사용). 없으면 r2.dev 형태 폴백.
     R2_PUBLIC_BASE_URL: str = ""
+    # 버킷 내 키 프리픽스(전용 버킷이면 빈 값). 쓰면 '/'로 끝나야 함
+    R2_KEY_PREFIX: str = ""
 
     # 분석/임베딩 (프로덕션 RAM 1.8GB 제약 → 경량 ONNX 384차원)
     # e5-small은 fastembed registry 미지원 → MiniLM 다국어로 확정 (lr-333a4e1a)

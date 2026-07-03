@@ -1,7 +1,7 @@
 {
   "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
   "dimension": 384,
-  "updated_at": "2026-07-03T07:17:21",
+  "updated_at": "2026-07-03T09:52:33",
   "entries": {
     "lr-bfa0c3fb": {
       "hash": "60c21e18ea6f0bc7",
@@ -26,6 +26,14 @@
     "lr-333a4e1a": {
       "hash": "e902643d7de234f4",
       "idx": 5
+    },
+    "lr-a7a72456": {
+      "hash": "17e98e422bd4fdee",
+      "idx": 6
+    },
+    "lr-8271bff1": {
+      "hash": "0909c8335b283cd1",
+      "idx": 7
     }
   }
 }

@@ -55,26 +55,37 @@ class PublishService:
         self.db.flush()  # meme.id 확보
         meme_id = meme.id
 
-        # 2) 미디어 파일 이동 → MEDIA_ROOT/{meme_id}/
-        dest_dir = os.path.join(settings.MEDIA_ROOT, str(meme_id))
-        os.makedirs(dest_dir, exist_ok=True)
-        self._current_dir = dest_dir  # 부분 이동 실패 시 정리 대상
-
-        orig_key = f"{meme_id}/orig.{ext}"
-        shutil.move(media["orig_path"], os.path.join(settings.MEDIA_ROOT, orig_key))
-        meme.r2_orig_key = orig_key
-
+        # 2) 미디어 저장 — meme PENDING 선생성 뒤에만 실행(orphan 방지 규약)
+        pairs: list[tuple[str, str]] = [(f"{meme_id}/orig.{ext}", media["orig_path"])]
         if media.get("thumb_path"):
-            thumb_key = f"{meme_id}/thumb.webp"
-            shutil.move(
-                media["thumb_path"], os.path.join(settings.MEDIA_ROOT, thumb_key)
-            )
-            meme.r2_thumb_key = thumb_key
-
+            pairs.append((f"{meme_id}/thumb.webp", media["thumb_path"]))
         if media.get("mp4_path"):
-            mp4_key = f"{meme_id}/video.mp4"
-            shutil.move(media["mp4_path"], os.path.join(settings.MEDIA_ROOT, mp4_key))
-            meme.r2_mp4_key = mp4_key
+            pairs.append((f"{meme_id}/video.mp4", media["mp4_path"]))
+
+        dest_dir: str | None = None
+        if settings.STORAGE_MODE == "r2":
+            # r2: 업로드 후 로컬 임시파일 제거. 실패 시 업로드분은 롤백 핸들러가 회수
+            from src.infrastructure.r2.r2_client import r2_client
+
+            self._uploaded_keys = []
+            for key, path in pairs:
+                r2_client.upload_file(key, path)
+                self._uploaded_keys.append(key)
+                os.remove(path)
+        else:
+            # local: MEDIA_ROOT/{meme_id}/ 로 이동
+            dest_dir = os.path.join(settings.MEDIA_ROOT, str(meme_id))
+            os.makedirs(dest_dir, exist_ok=True)
+            self._current_dir = dest_dir  # 부분 이동 실패 시 정리 대상
+            for key, path in pairs:
+                shutil.move(path, os.path.join(settings.MEDIA_ROOT, key))
+
+        meme.r2_orig_key = pairs[0][0]
+        for key, _ in pairs[1:]:
+            if key.endswith("thumb.webp"):
+                meme.r2_thumb_key = key
+            elif key.endswith("video.mp4"):
+                meme.r2_mp4_key = key
 
         # 3) analysis / embedding 확정
         self.db.add(
@@ -109,6 +120,7 @@ class PublishService:
         published = 0
         for item in items:
             self._current_dir: str | None = None
+            self._uploaded_keys: list[str] = []
             try:
                 self._current_dir = self._publish_one(item)
                 self.db.commit()
@@ -116,9 +128,17 @@ class PublishService:
             except Exception:  # noqa: BLE001
                 self.db.rollback()
                 logger.warning("publish 실패 item=%s", item.id, exc_info=True)
-                # 롤백으로 meme row 는 미확정. 이동된 미디어 디렉토리만 정리(고아 파일 방지)
+                # 롤백으로 meme row 는 미확정. 이동·업로드된 미디어만 정리(고아 파일 방지)
                 if self._current_dir and os.path.isdir(self._current_dir):
                     shutil.rmtree(self._current_dir, ignore_errors=True)
+                if self._uploaded_keys:
+                    from src.infrastructure.r2.r2_client import r2_client
+
+                    for key in self._uploaded_keys:
+                        try:
+                            r2_client.delete_object(key)
+                        except Exception:  # noqa: BLE001
+                            logger.warning("r2 orphan 회수 실패 key=%s", key)
                 # raw_item REJECTED (새 트랜잭션)
                 self.repo.set_status(
                     item.id, PipelineState.REJECTED, RejectReason.FETCH_ERROR
