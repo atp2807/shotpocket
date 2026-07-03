@@ -1,6 +1,6 @@
 .search-page {
   min-height: 100dvh;
-  max-width: 640px;
+  max-width: 480px; /* 모바일 컬럼 통일 (피드·상세와 동일 폭) */
   margin: 0 auto;
   padding: 0 var(--spacing-4)
     calc(env(safe-area-inset-bottom, 0px) + var(--spacing-6));

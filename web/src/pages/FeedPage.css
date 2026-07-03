@@ -142,7 +142,7 @@
   z-index: var(--z-nav);
 }
 
-/* ---- 데스크톱: 카드 최대폭 480 중앙 정렬 ---- */
+/* ---- 데스크톱: 앱 전체를 모바일 컬럼(480px)로 — 네비·탭·액션도 같은 폭 ---- */
 @media (min-width: 768px) {
   .feed-slide {
     max-width: 480px;
@@ -151,5 +151,20 @@
 
   .feed-slide .meme-card {
     border-radius: var(--card-radius);
+  }
+
+  /* fixed 요소들을 카드와 같은 480px 컬럼에 정렬 (로고↔검색 거리 문제) */
+  .feed-nav,
+  .feed-tabs {
+    left: 50%;
+    right: auto;
+    width: 100%;
+    max-width: 480px;
+    transform: translateX(-50%);
+  }
+
+  /* 액션바도 컬럼 우측 가장자리에 붙인다 */
+  .feed-slide__actions {
+    right: var(--spacing-4);
   }
 }

@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # 저장 방식: local(MEDIA_ROOT 파일) | r2(Cloudflare R2 public URL)
     STORAGE_MODE: str = "local"
+    # local 모드 미디어 절대 URL 베이스 (프로덕션: https://shotpocket-api.sitos.me)
+    MEDIA_BASE_URL: str = ""
     # 로컬 미디어 저장 루트 / 무인 수집 인박스 / 파이프라인 작업 디렉토리
     MEDIA_ROOT: str = str(BASE_DIR / "var" / "media")
     INBOX_DIR: str = str(BASE_DIR / "var" / "inbox")

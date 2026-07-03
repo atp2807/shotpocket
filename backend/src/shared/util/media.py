@@ -19,4 +19,7 @@ def media_url(key: str | None) -> str | None:
         from src.infrastructure.r2.r2_client import r2_client
 
         return r2_client.public_url(key)
-    return f"/media/{key}"
+    # local: MEDIA_BASE_URL 설정 시 절대 URL (웹이 다른 도메인에서 서빙될 때 필수),
+    # 미설정이면 상대경로 (로컬 개발 — vite 프록시)
+    base = (settings.MEDIA_BASE_URL or "").rstrip("/")
+    return f"{base}/media/{key}"
