@@ -42,11 +42,28 @@ _SCHEMA_KEYS = (
     "lang_cd",
     "nsfw_score",
     "confidence",
+    "tags",
 )
+
+_MAX_TAGS = 8
 
 
 class VisionProvider(Protocol):
     def analyze(self, path: str, orig_filename: str) -> dict: ...
+
+
+def _normalize_tags(raw: object) -> list[str]:
+    """vision 응답의 tags 를 정본 형태로: list[str], 중복 제거, 공백 제거, 최대 개수 제한."""
+    if not isinstance(raw, list):
+        return []
+    seen: dict[str, None] = {}
+    for t in raw:
+        tag = str(t).strip().lstrip("#")
+        if tag and tag not in seen:
+            seen[tag] = None
+        if len(seen) >= _MAX_TAGS:
+            break
+    return list(seen)
 
 
 def _dominant_colors(path: str, k: int = 3) -> list[str]:
@@ -101,6 +118,8 @@ class MockVisionProvider:
             + (f" · 주요색 {','.join(colors)}" if colors else "")
         )
 
+        tags = _normalize_tags([situation_label, emotion_label, *caption_parts])
+
         return {
             "caption": caption,
             "situation": situation_label,
@@ -115,6 +134,7 @@ class MockVisionProvider:
             "model_cd": self.model_cd,
             "is_meme": True,  # mock 은 판별 능력 없음 — 통과시키고 게시 품질은 실 vision 에 위임
             "meme_score": 1.0,
+            "tags": tags,
         }
 
 
@@ -198,6 +218,7 @@ class AnthropicVisionProvider:
         result["model_cd"] = self.model_cd
         result["is_meme"] = bool(parsed.get("is_meme", True))
         result["meme_score"] = float(parsed.get("meme_score") or (1.0 if result["is_meme"] else 0.0))
+        result["tags"] = _normalize_tags(parsed.get("tags"))
         return result
 
 
@@ -212,13 +233,17 @@ def _analysis_prompt() -> str:
         '"ocr_text": str, "usage_context": str, '
         '"character_name": str|null, "meme_name": str, '
         '"lang_cd": "ko", "nsfw_score": 0~1 float, "confidence": 0~1 float, '
-        '"is_meme": bool, "meme_score": 0~1 float'
+        '"is_meme": bool, "meme_score": 0~1 float, '
+        f'"tags": string[] (최대 {_MAX_TAGS}개)'
         "}\n"
         f"situation 은 다음 코드 의미 중 하나로 서술: [{situation_list}]\n"
         "usage_context 는 '어떤 대화 상황에서 이 짤을 보내는가'를 구체적으로. "
         "ocr_text 는 이미지 안의 모든 한글/영문 텍스트.\n"
         "is_meme: 대화에서 반응/감정 표현용으로 보낼 만한 밈·짤이면 true. "
-        "여행 인증샷·취미/제품 사진·풍경 등 일반 사진이면 false, meme_score 낮게."
+        "여행 인증샷·취미/제품 사진·풍경 등 일반 사진이면 false, meme_score 낮게.\n"
+        "tags: 사람들이 이 짤을 찾을 때 검색할 법한 한국어 키워드(2~8개). "
+        "상황·감정·등장인물·밈 유행어·행동을 짧은 명사/구로. 예: [\"퇴근\", \"월요일\", \"현타\", \"직장인\"]. "
+        "situation·emotion_cd 와 겹쳐도 되고, 그보다 더 구체적인 검색어를 포함할 것."
     )
 
 
@@ -285,6 +310,7 @@ class ClaudeCliVisionProvider:
         # 밈 판별 (analysis 테이블 저장 대상 아님 — analyze 단계 필터용)
         result["is_meme"] = bool(parsed.get("is_meme", True))
         result["meme_score"] = float(parsed.get("meme_score") or (1.0 if result["is_meme"] else 0.0))
+        result["tags"] = _normalize_tags(parsed.get("tags"))
         return result
 
 

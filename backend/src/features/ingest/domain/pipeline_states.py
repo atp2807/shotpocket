@@ -30,6 +30,8 @@ class RejectReason:
     TOO_LARGE = "TOO_LARGE"
     # 밈이 아닌 일반 사진 (vision is_meme=false — 커뮤니티 글엔 여행·취미 사진이 다수 섞임)
     NOT_MEME = "NOT_MEME"
+    # 종횡비가 정책 상한(3:1) 초과 — 웹툰 컷 등 "화면 한 장"을 넘는 세로/가로로 긴 이미지
+    WRONG_ASPECT = "WRONG_ASPECT"
 
 
 # 파이프라인 틱에서 순차 처리할 (입력→출력) 전이 순서

@@ -7,6 +7,9 @@
 수집 허용 검사(초과 시 REJECTED, reject_reason_cd 기록 — 설계 dc-28f124be v1.3):
   - 스틸: 파일 ≤20MB · 장변 ≤4096px  (초과 TOO_LARGE)
   - GIF : 파일 ≤15MB (초과 TOO_LARGE) · 재생 ≤3초 (초과 TOO_LONG)
+  - 공통: 장변/단변 비율 ≤3.0 (초과 WRONG_ASPECT) — "짤"은 화면 한 장 기준,
+    웹툰 컷처럼 세로(또는 가로)로 여러 화면 이어진 이미지 배제. 참고: 틱톡 표준
+    9:16≈1.78:1, 갤럭시폴드 커버화면 22:9≈2.44:1 — 둘 다 3:1 안쪽.
 정규화(허용된 미디어의 서빙 상한):
   - 스틸 장변 >2048px → 2048 다운스케일(포맷·EXIF 방향 유지, JPEG quality 90)
   - GIF  장변 >720px  → ffmpeg scale + palettegen/paletteuse 로 720px GIF 재생성
@@ -37,6 +40,7 @@ _THUMB_MAX = 480
 _STILL_MAX_BYTES = 20 * 1024 * 1024
 _STILL_MAX_EDGE = 4096
 _GIF_MAX_BYTES = 15 * 1024 * 1024
+_MAX_ASPECT_RATIO = 3.0
 
 # 정규화(서빙) 상한
 _STILL_NORMALIZE_EDGE = 2048
@@ -143,8 +147,15 @@ class TranscodeService:
                         )
                     first_frame = im.convert("RGB")
                 long_edge = max(width, height)
+                short_edge = max(min(width, height), 1)
 
                 # ---- 수집 허용 검사 (초과 REJECT) ----
+                if long_edge / short_edge > _MAX_ASPECT_RATIO:
+                    self.repo.set_status(
+                        item.id, PipelineState.REJECTED, RejectReason.WRONG_ASPECT
+                    )
+                    processed += 1
+                    continue
                 if is_loop:
                     if file_size > _GIF_MAX_BYTES:
                         self.repo.set_status(

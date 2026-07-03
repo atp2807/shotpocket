@@ -28,6 +28,7 @@ def load_meme_extras(db: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, dict]
             Analysis.meme_name,
             Analysis.emotion_cd,
             Analysis.situation,
+            Analysis.tags,
             MemeStat.like_cnt,
             MemeStat.download_cnt,
         )
@@ -37,12 +38,13 @@ def load_meme_extras(db: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, dict]
         .order_by(Analysis.created_ts.asc().nullsfirst())
     ).all()
     extras: dict[uuid.UUID, dict] = {}
-    for mid, caption, meme_name, emotion_cd, situation, like_cnt, download_cnt in rows:
+    for mid, caption, meme_name, emotion_cd, situation, tags, like_cnt, download_cnt in rows:
         extras[mid] = {
             "caption": caption,
             "meme_name": meme_name,
             "emotion_cd": emotion_cd,
             "situation": situation,
+            "tags": list(tags or []),
             "like_cnt": int(like_cnt or 0),
             "download_cnt": int(download_cnt or 0),
         }

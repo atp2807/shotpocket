@@ -1,6 +1,6 @@
 """임베딩 서비스 — TRANSCODED → EMBEDDED.
 
-analysis 텍스트(caption+situation+usage_context+ocr_text)를 결합 임베딩(1024d)해
+analysis 텍스트(caption+situation+usage_context+ocr_text+tags)를 결합 임베딩해
 raw_item.payload['embedding'] 에 적재(게시 단계에서 meme.embedding 로 확정).
 """
 from __future__ import annotations
@@ -22,6 +22,7 @@ def build_embed_text(analysis: dict) -> str:
         analysis.get("situation"),
         analysis.get("usage_context"),
         analysis.get("ocr_text"),
+        " ".join(analysis.get("tags") or []),
     ]
     return " ".join(p for p in parts if p).strip()
 

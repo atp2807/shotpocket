@@ -102,6 +102,7 @@ class PublishService:
                 nsfw_score=analysis.get("nsfw_score"),
                 confidence=analysis.get("confidence"),
                 model_cd=analysis.get("model_cd"),
+                tags=analysis.get("tags") or [],
             )
         )
         if embedding:

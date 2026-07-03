@@ -28,12 +28,18 @@ class SearchRepo:
         return [row[0] for row in self.db.execute(stmt).all()]
 
     def keyword_ids(self, q: str, limit: int) -> list[uuid.UUID]:
-        """caption/ocr_text/meme_name ILIKE 매칭 meme_id (ACTIVE), rank_score 순."""
+        """caption/ocr_text/meme_name/tags ILIKE 매칭 meme_id (ACTIVE), rank_score 순.
+
+        tags 는 태그 검색(F26 시리즈 모아보기 포함)의 핵심 신호라 배열 원소 부분
+        일치(ANY)도 포함한다 — 정확일치보다 회복력 있는 매칭.
+        """
         like = f"%{q}%"
         text_match = or_(
             Analysis.caption.ilike(like),
             Analysis.ocr_text.ilike(like),
             Analysis.meme_name.ilike(like),
+            Analysis.tags.any(q),
+            func.array_to_string(Analysis.tags, " ").ilike(like),
         )
         stmt = (
             select(Meme.id)

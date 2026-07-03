@@ -13,7 +13,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.config.database import Base
@@ -67,6 +67,7 @@ class Analysis(Base):
     nsfw_score: Mapped[float | None] = mapped_column(Numeric(5, 4))
     confidence: Mapped[float | None] = mapped_column(Numeric(5, 4))
     model_cd: Mapped[str | None] = mapped_column(String(64))
+    tags: Mapped[list[str]] = mapped_column(ARRAY(Text), server_default="{}")
     created_ts: Mapped[dt.datetime] = mapped_column(server_default=func.now())
 
 

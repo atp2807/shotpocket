@@ -34,6 +34,7 @@ class MemeSummary(BaseModel):
     meme_name: str | None = None
     emotion_cd: str | None = None
     situation: str | None = None
+    tags: list[str] = []
     # 집계 필드 (stat.meme_stat, 없으면 0)
     like_cnt: int = 0
     download_cnt: int = 0
@@ -53,6 +54,7 @@ class MemeSummary(BaseModel):
             meme_name=extra.get("meme_name"),
             emotion_cd=extra.get("emotion_cd"),
             situation=extra.get("situation"),
+            tags=list(extra.get("tags") or []),
             like_cnt=int(extra.get("like_cnt") or 0),
             download_cnt=int(extra.get("download_cnt") or 0),
         )
@@ -79,6 +81,7 @@ class MemeResponse(BaseModel):
     meme_name: str | None = None
     emotion_cd: str | None = None
     situation: str | None = None
+    tags: list[str] = []
     # 집계 필드 (stat.meme_stat, 없으면 0)
     like_cnt: int = 0
     download_cnt: int = 0
@@ -103,6 +106,7 @@ class MemeResponse(BaseModel):
             meme_name=extra.get("meme_name"),
             emotion_cd=extra.get("emotion_cd"),
             situation=extra.get("situation"),
+            tags=list(extra.get("tags") or []),
             like_cnt=int(extra.get("like_cnt") or 0),
             download_cnt=int(extra.get("download_cnt") or 0),
         )
