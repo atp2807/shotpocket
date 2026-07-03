@@ -16,4 +16,4 @@ Pillow==11.1.0
 imageio-ffmpeg==0.6.0
 # 임베딩 실공급자(384d 다국어). 미설치/미로드 시 mock 폴백.
 # 주의: 0.4.2 ONNX registry 에 intfloat/multilingual-e5-small 미포함 → 아래 TODO 참고.
-fastembed==0.4.2
+fastembed==0.8.0
