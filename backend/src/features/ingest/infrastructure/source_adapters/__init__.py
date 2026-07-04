@@ -7,6 +7,7 @@ source.source_type_cd 로 어댑터를 선택한다.
   WORK_DIR 로 이동하고 후보를 반환(재스캔 시 중복 픽업 방지).
 - DcinsideAdapter(DCINSIDE): 디시인사이드 힛갤 실크롤(dcinside.py).
 - RuliwebAdapter(RULIWEB): 루리웹 유머 베스트 실크롤(ruliweb.py).
+- NamuwikiAdapter(NAMUWIKI): 나무위키 밈 카테고리 실크롤(namuwiki.py, og:title/og:image).
 - WebSourceAdapter(WEB): 일반 웹 페이지 크롤 어댑터 자리(TODO).
 
 fetch(base_url, *, limit, is_seen) — limit=회당 글 상한, is_seen(origin_url)->bool 은
@@ -22,6 +23,7 @@ from typing import Callable, Protocol
 
 from src.config.settings import settings
 from src.features.ingest.infrastructure.source_adapters.dcinside import DcinsideAdapter
+from src.features.ingest.infrastructure.source_adapters.namuwiki import NamuwikiAdapter
 from src.features.ingest.infrastructure.source_adapters.ruliweb import RuliwebAdapter
 
 logger = logging.getLogger("shotpocket.ingest.adapter")
@@ -116,6 +118,7 @@ ADAPTER_REGISTRY: dict[str, SourceAdapter] = {
     LocalFolderAdapter.source_type_cd: LocalFolderAdapter(),
     DcinsideAdapter.source_type_cd: DcinsideAdapter(),
     RuliwebAdapter.source_type_cd: RuliwebAdapter(),
+    NamuwikiAdapter.source_type_cd: NamuwikiAdapter(),
     WebSourceAdapter.source_type_cd: WebSourceAdapter(),
 }
 

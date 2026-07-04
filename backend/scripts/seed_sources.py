@@ -29,6 +29,13 @@ SEED_SOURCES: list[tuple[str, str, str, int]] = [
         "RULIWEB",
         20,
     ),
+    (
+        # 카테고리 페이지 URL(인코딩) — 분류:인터넷 밈
+        "namuwiki-internet-meme",
+        "https://namu.wiki/w/%EB%B6%84%EB%A5%98:%EC%9D%B8%ED%84%B0%EB%84%B7%20%EB%B0%88",
+        "NAMUWIKI",
+        20,
+    ),
 ]
 
 

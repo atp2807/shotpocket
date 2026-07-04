@@ -37,6 +37,10 @@ class PublishService:
         payload = dict(item.payload or {})
         media = payload.get("media") or {}
         analysis = payload.get("analysis") or {}
+        # 나무위키 소스: og:title(고유명사·문서 제목)로 meme_name 을 덮어쓴다.
+        # (vision 캡션 추측보다 신뢰도 높음. namuwiki 외 소스는 이 키가 없어 무영향.)
+        if payload.get("namuwiki_meme_name"):
+            analysis = {**analysis, "meme_name": payload["namuwiki_meme_name"]}
         embedding = payload.get("embedding")
         ext = payload.get("ext", "png")
 

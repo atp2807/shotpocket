@@ -42,6 +42,25 @@ _DELAY_MIN = 2.0
 _DELAY_MAX = 3.0
 
 
+def _apply_longest_match(rp: RobotFileParser) -> None:
+    """RobotFileParser 의 first-match 평가를 longest-match(RFC 9309/Google)로 보정.
+
+    파이썬 표준 파서는 각 그룹의 룰을 '파일 순서 첫 매치'로 판정한다. 그래서
+    `Disallow: /` 가 `Allow: /w/` 앞에 오면(namu.wiki 등) 더 구체적인 Allow 에 닿기 전에
+    전 경로가 막힌다. 실제 크롤러는 '가장 긴(구체적인) 경로 우선, 동률이면 Allow 우선'을
+    쓴다. 각 엔트리의 rulelines 를 그 순서로 재정렬하면 first-match=longest-match 가 된다.
+    """
+    entries = list(getattr(rp, "entries", []) or [])
+    if getattr(rp, "default_entry", None) is not None:
+        entries.append(rp.default_entry)
+    for entry in entries:
+        rulelines = getattr(entry, "rulelines", None)
+        if not rulelines:
+            continue
+        # 긴 path 우선, 동률이면 Allow(allowance=True) 우선.
+        rulelines.sort(key=lambda rl: (len(rl.path), rl.allowance), reverse=True)
+
+
 class CrawlSession:
     """스로틀 httpx 클라이언트 + robots 판정. 소스 1개당 1인스턴스, 순차 사용."""
 
@@ -85,8 +104,19 @@ class CrawlSession:
             return self._robots[host]
         rp = RobotFileParser()
         rp.set_url(f"{host}/robots.txt")
+        # RobotFileParser.read() 는 urllib 기본 UA 로 fetch 하는데, 일부 사이트(예: namu.wiki)는
+        # 그 UA 에 403 을 주고 이때 disallow_all 이 켜져 전 경로가 차단된다. 우리 실제 UA(httpx
+        # self._client)로 직접 받아 parse() 에 넘겨 이 오탐을 막는다(비200/실패는 허용 취급).
         try:
-            rp.read()
+            resp = self._client.get(f"{host}/robots.txt")
+            if resp.status_code != 200:
+                logger.warning(
+                    "robots.txt 응답 비정상(%s status=%s) — 허용으로 진행", host, resp.status_code
+                )
+                self._robots[host] = None
+                return None
+            rp.parse(resp.text.splitlines())
+            _apply_longest_match(rp)
         except Exception as exc:  # noqa: BLE001 — robots 못 읽으면 보수적으로 허용 취급
             logger.warning("robots.txt 읽기 실패(%s): %s — 허용으로 진행", host, exc)
             self._robots[host] = None
@@ -102,12 +132,20 @@ class CrawlSession:
 
 
 def download_image(
-    session: CrawlSession, url: str, referer: str | None = None
+    session: CrawlSession,
+    url: str,
+    referer: str | None = None,
+    *,
+    min_bytes: int = _MIN_BYTES,
+    min_side: int = _MIN_SIDE,
 ) -> dict | None:
     """이미지 1장 다운로드 + 필터 통과 시 WORK_DIR 저장 → 후보 payload 조각 반환.
 
-    필터: 확장자 png/jpg/jpeg/webp/gif 외(PIL 포맷 기준) 제외, 20KB 미만 제외,
-    한 변 200px 미만 제외. 통과 실패/에러는 None(호출부에서 스킵).
+    필터: 확장자 png/jpg/jpeg/webp/gif 외(PIL 포맷 기준) 제외, min_bytes 미만 제외,
+    한 변 min_side px 미만 제외. 통과 실패/에러는 None(호출부에서 스킵).
+
+    min_bytes/min_side 기본값은 포럼 원본(아이콘·광고 배제) 기준. 나무위키처럼 대표
+    이미지가 CDN 리사이즈 썸네일(소용량 webp)인 소스는 이 임계를 낮춰 호출한다.
     """
     try:
         resp = session.get(url, referer=referer)
@@ -119,8 +157,8 @@ def download_image(
         return None
 
     data = resp.content
-    if len(data) < _MIN_BYTES:
-        logger.debug("소형 이미지 제외(<20KB, %dB) %s", len(data), url)
+    if len(data) < min_bytes:
+        logger.debug("소형 이미지 제외(<%dB, %dB) %s", min_bytes, len(data), url)
         return None
 
     try:
@@ -135,8 +173,8 @@ def download_image(
     if ext is None:
         logger.debug("미지원 포맷 제외 fmt=%s %s", fmt, url)
         return None
-    if min(width, height) < _MIN_SIDE:
-        logger.debug("소형 이미지 제외(<200px, %dx%d) %s", width, height, url)
+    if min(width, height) < min_side:
+        logger.debug("소형 이미지 제외(<%dpx, %dx%d) %s", min_side, width, height, url)
         return None
 
     work_dir = settings.WORK_DIR
