@@ -9,4 +9,5 @@ __pycache__
 .turbo
 .DS_Store
 backend/secrets/
+backend/var/
 .wrangler
