@@ -109,6 +109,14 @@
   margin-top: var(--spacing-2);
 }
 
+.detail-info__origin {
+  display: inline-block;
+  margin-top: var(--spacing-3);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-decoration: underline;
+}
+
 /* ---- Similar strip ---- */
 .detail-similar {
   margin-top: var(--spacing-7);

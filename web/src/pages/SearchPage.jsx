@@ -13,6 +13,7 @@ import {
   pushRecentSearch,
 } from '../utils/searchHistory.js';
 import { showToast } from '../components/common/Toast.js';
+import Footer from '../components/common/Footer.jsx';
 import { logger } from '../utils/logger.js';
 import './SearchPage.css';
 
@@ -352,6 +353,8 @@ export default function SearchPage() {
           />
         </>
       ) : null}
+
+      <Footer />
     </main>
   );
 }

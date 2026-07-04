@@ -1,0 +1,119 @@
+.report-page {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--spacing-5) var(--spacing-4)
+    calc(env(safe-area-inset-bottom, 0px) + var(--spacing-8));
+  background: var(--surface-base);
+  box-sizing: border-box;
+}
+
+.report-page__head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+}
+
+.report-page__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.report-page__back:hover {
+  background: var(--surface-overlay);
+}
+
+.report-page__title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+}
+
+.report-page__desc {
+  margin: 0 0 var(--spacing-6);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-base);
+}
+
+.report-page__desc strong {
+  color: var(--text-primary);
+}
+
+.report-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.report-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.report-page__label {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.report-page__input,
+.report-page__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-base);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.report-page__textarea {
+  resize: vertical;
+}
+
+.report-page__input:focus,
+.report-page__textarea:focus {
+  border-color: var(--brand);
+}
+
+.report-page__reasons {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.report-page__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+
+.report-page__radio {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.report-page__submit {
+  width: 100%;
+}
+
+.report-page__done {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+}

@@ -164,6 +164,22 @@ export default function MemeDetailPage() {
         <div className="detail-info__actions">
           <ActionBar meme={meme} orientation="horizontal" />
         </div>
+        {meme.origin_url ? (
+          <a
+            href={meme.origin_url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="detail-info__origin"
+          >
+            출처: {(() => {
+              try {
+                return new URL(meme.origin_url).hostname.replace(/^www\./, '');
+              } catch {
+                return '원본 보기';
+              }
+            })()}
+          </a>
+        ) : null}
       </section>
 
       {similar.length > 0 ? (
