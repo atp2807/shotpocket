@@ -117,8 +117,19 @@ class TranscodeService:
         im.save(out_path, format=save_fmt, **save_kwargs)
         return out_path, im.width, im.height
 
-    def run(self, limit: int = 100) -> int:
-        items = self.repo.list_by_status(PipelineState.ANALYZED, limit)
+    def run(
+        self,
+        limit: int = 100,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> int:
+        items = self.repo.list_by_status(
+            PipelineState.ANALYZED,
+            limit,
+            include_source_types=include_source_types,
+            exclude_source_types=exclude_source_types,
+        )
         work_dir = settings.WORK_DIR
         os.makedirs(work_dir, exist_ok=True)
         processed = 0

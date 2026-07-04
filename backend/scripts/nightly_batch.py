@@ -254,7 +254,11 @@ def run() -> int:
     from src.features.ingest.application.embed_service import EmbedService
     from src.features.ingest.application.publish_service import PublishService
     from src.features.ingest.application.transcode_service import TranscodeService
-    from src.features.ingest.domain.pipeline_states import PipelineState, RejectReason
+    from src.features.ingest.domain.pipeline_states import (
+        MAC_ONLY_SOURCE_TYPES,
+        PipelineState,
+        RejectReason,
+    )
     from src.infrastructure.db.models.ingest import RawItem
 
     def _not_meme_total(db) -> int:
@@ -285,21 +289,46 @@ def run() -> int:
         # 2) 크롤 → dedup → analyze(claude_cli) → transcode → embed → publish
         not_meme_before = _not_meme_total(db)
 
+        # 맥 전용 소스(MAC_ONLY_SOURCE_TYPES)로 전 단계를 스코핑한다 — 서버가 크롤한
+        # 항목(파일이 서버 로컬 디스크에만 있음)을 맥이 잘못 집어가는 레이스를 방지
+        # (실측으로 발견된 문제, lr-d0c4207f). crawl 도 같은 이유로 이 소스만 시도한다.
         summary["crawl"] = stage(
-            "crawl", lambda: CrawlService(db).crawl(post_limit=posts_per_source)
+            "crawl",
+            lambda: CrawlService(db).crawl(
+                post_limit=posts_per_source, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
         )
-        summary["dedup"] = stage("dedup", lambda: DedupService(db).run(stage_limit))
+        summary["dedup"] = stage(
+            "dedup",
+            lambda: DedupService(db).run(
+                stage_limit, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
+        )
         summary["analyze"] = stage(
-            "analyze", lambda: AnalyzeService(db).run(analyze_limit)
+            "analyze",
+            lambda: AnalyzeService(db).run(
+                analyze_limit, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
         )
         summary["not_meme_rejected"] = _not_meme_total(db) - not_meme_before
         summary["transcode"] = stage(
-            "transcode", lambda: TranscodeService(db).run(stage_limit)
+            "transcode",
+            lambda: TranscodeService(db).run(
+                stage_limit, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
         )
-        summary["embed"] = stage("embed", lambda: EmbedService(db).run(stage_limit))
+        summary["embed"] = stage(
+            "embed",
+            lambda: EmbedService(db).run(
+                stage_limit, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
+        )
 
         meme_ids = stage(
-            "publish", lambda: PublishService(db).run(stage_limit)
+            "publish",
+            lambda: PublishService(db).run(
+                stage_limit, include_source_types=MAC_ONLY_SOURCE_TYPES
+            ),
         )
         summary["publish_pending"] = len(meme_ids)
 

@@ -28,17 +28,26 @@ class CrawlService:
         stmt = select(RawItem.id).where(RawItem.origin_url == origin_url).limit(1)
         return self.db.execute(stmt).first() is not None
 
-    def crawl(self, post_limit: int = DEFAULT_POST_LIMIT) -> int:
+    def crawl(
+        self,
+        post_limit: int = DEFAULT_POST_LIMIT,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> int:
         """활성 소스 크롤 → 신규 raw_item 수.
 
         각 어댑터에 글 상한(post_limit)과 origin_url 중복 스킵 콜백을 전달한다.
         어댑터 1개 실패가 전체 크롤을 죽이지 않도록 소스 단위로 격리한다.
+        include/exclude_source_types 로 크롤 대상 소스 유형을 스코핑한다(예:
+        서버는 맥 전용 소스를 아예 시도하지 않게 exclude — 어차피 403 이라 낭비).
         """
-        stmt = (
-            select(Source)
-            .where(Source.enabled_yn.is_(True))
-            .order_by(Source.priority.asc())
-        )
+        stmt = select(Source).where(Source.enabled_yn.is_(True))
+        if include_source_types:
+            stmt = stmt.where(Source.source_type_cd.in_(include_source_types))
+        if exclude_source_types:
+            stmt = stmt.where(Source.source_type_cd.notin_(exclude_source_types))
+        stmt = stmt.order_by(Source.priority.asc())
         sources = list(self.db.execute(stmt).scalars().all())
         created = 0
         for source in sources:

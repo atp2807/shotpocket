@@ -25,6 +25,7 @@ from src.features.ingest.application.dedup_service import DedupService
 from src.features.ingest.application.embed_service import EmbedService
 from src.features.ingest.application.publish_service import PublishService
 from src.features.ingest.application.transcode_service import TranscodeService
+from src.features.ingest.domain.pipeline_states import MAC_ONLY_SOURCE_TYPES
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("shotpocket.scheduler")
@@ -33,21 +34,26 @@ logger = logging.getLogger("shotpocket.scheduler")
 def job_crawl() -> None:
     db = SessionLocal()
     try:
-        n = CrawlService(db).crawl()
+        # 맥 전용 소스(예: NAMUWIKI — Cloudflare 가 서버 IP 차단)는 서버가 시도하지 않는다.
+        n = CrawlService(db).crawl(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
         logger.info("[crawl] created=%d", n)
     finally:
         db.close()
 
 
 def job_pipeline_tick() -> None:
-    """dedup → analyze → transcode → embed → publish 를 순차로 한 틱 진행."""
+    """dedup → analyze → transcode → embed → publish 를 순차로 한 틱 진행.
+
+    맥 전용 소스(MAC_ONLY_SOURCE_TYPES)는 파일이 서버에 없으므로 제외한다 —
+    맥의 nightly_batch.py 가 그 소스만 전담 처리한다(레이스 방지, lr-d0c4207f).
+    """
     db = SessionLocal()
     try:
-        DedupService(db).run()
-        AnalyzeService(db).run()
-        TranscodeService(db).run()
-        EmbedService(db).run()
-        PublishService(db).run()
+        DedupService(db).run(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
+        AnalyzeService(db).run(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
+        TranscodeService(db).run(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
+        EmbedService(db).run(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
+        PublishService(db).run(exclude_source_types=MAC_ONLY_SOURCE_TYPES)
         logger.info("[pipeline_tick] done")
     finally:
         db.close()

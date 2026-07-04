@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from src.features.meme.domain.entities import MemeStatus
-from src.infrastructure.db.models.ingest import RawItem
+from src.infrastructure.db.models.ingest import RawItem, Source
 from src.infrastructure.db.models.meme import Meme
 
 # dedup 비교 대상: 이미 수용(=거부 아님)되어 파이프라인에 올라간 raw_item 상태들
@@ -18,13 +18,29 @@ class RawItemRepo:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_by_status(self, status_cd: str, limit: int = 100) -> list[RawItem]:
-        stmt = (
-            select(RawItem)
-            .where(RawItem.status_cd == status_cd)
-            .order_by(RawItem.created_ts.asc())
-            .limit(limit)
-        )
+    def list_by_status(
+        self,
+        status_cd: str,
+        limit: int = 100,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> list[RawItem]:
+        """대기열 조회. include/exclude_source_types 로 소스 유형 스코핑.
+
+        크롤 환경(서버·맥)마다 이미지 파일이 로컬 디스크에만 있어, 서로 다른
+        머신이 크롤한 raw_item 을 잘못 집어가면(파일 없음) 처리가 깨진다.
+        환경별 진입점(scheduler_main.py=서버, nightly_batch.py=맥)이 이 스코핑으로
+        서로의 대기열을 침범하지 않게 한다.
+        """
+        stmt = select(RawItem).where(RawItem.status_cd == status_cd)
+        if include_source_types or exclude_source_types:
+            stmt = stmt.join(Source, Source.id == RawItem.source_id)
+            if include_source_types:
+                stmt = stmt.where(Source.source_type_cd.in_(include_source_types))
+            if exclude_source_types:
+                stmt = stmt.where(Source.source_type_cd.notin_(exclude_source_types))
+        stmt = stmt.order_by(RawItem.created_ts.asc()).limit(limit)
         return list(self.db.execute(stmt).scalars().all())
 
     def exists_phash(self, phash: str) -> bool:

@@ -34,6 +34,13 @@ class RejectReason:
     WRONG_ASPECT = "WRONG_ASPECT"
 
 
+# 이미지 파일이 맥 로컬 디스크에만 존재하는 소스 유형 — 서버 스케줄러는 이 소스의
+# raw_item 을 analyze/transcode/embed/publish 하지 않는다(파일을 찾을 수 없음).
+# 나무위키는 Cloudflare 가 서버(AWS EC2) IP 를 차단해 맥에서만 크롤 가능하다(lr-d0c4207f).
+# 반대로 맥의 nightly_batch.py 는 이 집합만 처리한다(서버가 크롤한 파일은 맥에 없음).
+MAC_ONLY_SOURCE_TYPES: set[str] = {"NAMUWIKI"}
+
+
 # 파이프라인 틱에서 순차 처리할 (입력→출력) 전이 순서
 PIPELINE_ORDER: list[tuple[str, str]] = [
     (PipelineState.FETCHED, PipelineState.DEDUPED),

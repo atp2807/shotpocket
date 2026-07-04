@@ -44,8 +44,19 @@ class DedupService:
             logger.warning("phash 계산 실패 item=%s path=%s", item.id, path)
             return None
 
-    def run(self, limit: int = 100) -> int:
-        items = self.repo.list_by_status(PipelineState.FETCHED, limit)
+    def run(
+        self,
+        limit: int = 100,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> int:
+        items = self.repo.list_by_status(
+            PipelineState.FETCHED,
+            limit,
+            include_source_types=include_source_types,
+            exclude_source_types=exclude_source_types,
+        )
         # 기존 게시 meme + 선행 수용 raw_item 의 phash 를 근접중복 기준으로 로드
         known: list[str] = [
             p for p in (self.repo.meme_phashes() + self.repo.accepted_phashes()) if p

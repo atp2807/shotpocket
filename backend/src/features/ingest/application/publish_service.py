@@ -124,13 +124,24 @@ class PublishService:
         self.repo.set_status(item.id, PipelineState.PUBLISHED)
         return str(meme_id), dest_dir
 
-    def run(self, limit: int = 100) -> list[str]:
+    def run(
+        self,
+        limit: int = 100,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> list[str]:
         """게시 실행. 이번 run 에서 생성된 meme_id 문자열 목록을 반환한다.
 
         DEFER 모드에서 오케스트레이터가 이 목록으로 (rsync 후) 활성화 대상을
         특정한다. 반환 목록 길이가 곧 게시 건수다(len()).
         """
-        items = self.repo.list_by_status(PipelineState.EMBEDDED, limit)
+        items = self.repo.list_by_status(
+            PipelineState.EMBEDDED,
+            limit,
+            include_source_types=include_source_types,
+            exclude_source_types=exclude_source_types,
+        )
         meme_ids: list[str] = []
         for item in items:
             self._current_dir: str | None = None

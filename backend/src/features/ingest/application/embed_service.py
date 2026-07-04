@@ -33,8 +33,19 @@ class EmbedService:
         self.repo = RawItemRepo(db)
         self.embedder = get_embedder()
 
-    def run(self, limit: int = 100) -> int:
-        items = self.repo.list_by_status(PipelineState.TRANSCODED, limit)
+    def run(
+        self,
+        limit: int = 100,
+        *,
+        include_source_types: set[str] | None = None,
+        exclude_source_types: set[str] | None = None,
+    ) -> int:
+        items = self.repo.list_by_status(
+            PipelineState.TRANSCODED,
+            limit,
+            include_source_types=include_source_types,
+            exclude_source_types=exclude_source_types,
+        )
         processed = 0
         for item in items:
             payload = dict(item.payload or {})
